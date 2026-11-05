@@ -1,0 +1,26 @@
+# ── macOS / Swift ───────────────────────────────────────────────────────
+.DS_Store
+.build/
+.swiftpm/
+DerivedData/
+# The locally built bundle (scripts/make-app.sh output); /Applications holds the installed copy.
+/Swapless.app
+
+# ── Secrets ─────────────────────────────────────────────────────────────
+.env*
+secrets/
+
+# ── Claude Code ─────────────────────────────────────────────────────────
+# Project-shared settings (.claude/settings.json) ARE committed on purpose so a
+# colleague who clones inherits the permission allowlist. Per-user local overrides are not.
+.claude/settings.local.json
+.claude/worktrees/
+.claude/.DS_Store
+# Personal steering-loop capture (prompt log + proposals) — stays on each machine.
+# The hook script (.claude/hooks/capture-prompt.mjs) and /retro command ARE committed.
+# observer/README.md is ALSO committed — negate it explicitly (a bare `.claude/observer/`
+# ignores its own README too; found and fixed in other repos built from the same kit).
+.claude/observer/*
+!.claude/observer/README.md
+
+# Proof artifacts (screenshots, check outputs) are PRODUCT, committed on purpose — never ignore them.
