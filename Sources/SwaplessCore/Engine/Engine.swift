@@ -21,6 +21,8 @@ public struct EngineState: Sendable {
     public var ruleDisplays: [RuleDisplay]
     /// Bumped whenever something should light the menu-bar dot (owner call 5).
     public var dotGeneration: Int
+    /// The Today row (v1-menu-today S3).
+    public var activity: ActivityState = .notRecorded(reason: "history off")
 
     public init() {
         flags = []
@@ -84,8 +86,21 @@ public final class Engine: @unchecked Sendable {
     private var evalState = EvaluatorState()
     /// rule id → paused reason. The in-memory copy holds for this run even if history fails.
     private var pauses: [String: String] = [:]
-    /// Actions of (at least) the last 24 h, for cooldown, maxPerDay and the menu.
+    /// Actions of the last 9 days (T7): cooldown and maxPerDay filter on 24 h themselves;
+    /// the Today row reads all of them. A row is here only after its insert succeeded.
     private var recentActions: [ActionRow] = []
+    static let actionsKeptSeconds = 9 * 86400.0
+    /// The `yyyy-MM-dd` of past local days with a `system_samples` row (T11).
+    private var coverage: Set<String> = []
+    /// Local start of today at the last successful coverage probe.
+    private var coverageProbeDay: Double?
+    private var coverageErrorLogged = false
+    /// History opened successfully at least once in this run.
+    private var historyOpened = false
+    /// `--print-menu` / `--dump-snapshot`.
+    private var oneShotMode = false
+    /// The last `activity` line emitted, without `t`.
+    private var lastActivityLine: String?
     private var verifies: [String: (plan: VerifyPlan, start: Double, timer: DispatchSourceTimer)] = [:]
     private var lastSnapshot: Snapshot?
     private var lastGroups: [ProcessGroup] = []
@@ -93,6 +108,18 @@ public final class Engine: @unchecked Sendable {
 
     /// Called on the engine queue after every sweep.
     public var onState: (@Sendable (EngineState) -> Void)?
+
+    /// The open menu's display sweeps: the first right at open, then every 5 s (T2).
+    public static let displayInterval = 5.0
+    /// Display-timer firings that swept (either branch). Read on the engine queue.
+    public private(set) var displaySweeps = 0
+    /// `onState` calls. Read on the engine queue.
+    public private(set) var publishes = 0
+
+    private func sendState() {
+        publishes += 1
+        onState?(state)
+    }
 
     public init(config: Config, sink: EventSink, labeler: Labeler, signalSender: SignalSender,
                 inspector: ProcessInspector = LiveProcessInspector(),
@@ -189,6 +216,7 @@ public final class Engine: @unchecked Sendable {
                                                             afterMB: nil, wsBeforeMB: nil, wsAfterMB: nil))
             if let i = recentActions.firstIndex(where: { $0.id == row.id }) { recentActions[i].outcome = "interrupted" }
         }
+        recomputeActivity()
     }
 
     /// true when this engine holds the lock (or the lock can't exist: then history is off).
@@ -220,10 +248,13 @@ public final class Engine: @unchecked Sendable {
         history = h
         lastFlushWall = now
         for (id, p) in h.pauses() { pauses[id] = p.reason }
-        recentActions = h.actions(since: now - 2 * 86400)
+        recentActions = h.actions(since: now - Self.actionsKeptSeconds)
         let recent = h.loadRecent(now: now)
         detector.preload(meta: recent.meta, buckets: recent.buckets)
         h.pruneIfDue(now: now)
+        historyOpened = true
+        probeCoverage()
+        recomputeActivity()
     }
 
     /// Observe-only engines retry the lock on every base tick and take over once they get it.
@@ -233,6 +264,7 @@ public final class Engine: @unchecked Sendable {
         state.observeOnly = false
         sink.log(.history, "took over engine.lock; acting from now on")
         openHistory()
+        recomputeActivity()
     }
 
     private func flushHistory(now: Double, force: Bool) {
@@ -241,9 +273,65 @@ public final class Engine: @unchecked Sendable {
             lastFlushWall = now
             if !h.flush(now: now) || !h.isOn {
                 historyOff(h.error ?? "flush failed")
+            } else {
+                probeCoverage()
             }
             h.pruneIfDue(now: now)
         }
+    }
+
+    // MARK: - Activity (the Today row, v1-menu-today S3)
+
+    /// Probes the 6 past local days for samples. On an error the previous coverage is kept,
+    /// and one line is logged (again only after a successful probe).
+    private func probeCoverage() {
+        guard let h = history else { return }
+        let tz = TimeZone.autoupdatingCurrent
+        let all = ActivitySummary.dayRanges(now: Clock.wall(), timeZone: tz)
+        let past = all.dropFirst()
+        guard let found = h.daysWithSamples(past.map { ($0.start, $0.end) }) else {
+            if !coverageErrorLogged {
+                coverageErrorLogged = true
+                sink.log(.history, "coverage probe failed; keeping the previous days")
+            }
+            return
+        }
+        coverageErrorLogged = false
+        coverage = Set(past.filter { found.contains($0.start) }.map(\.key))
+        coverageProbeDay = all.first?.start
+    }
+
+    /// Re-probes coverage when the local day changed since the last probe.
+    private func probeCoverageIfNewDay() {
+        guard history != nil else { return }
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = .autoupdatingCurrent
+        let today = cal.startOfDay(for: Date(timeIntervalSince1970: Clock.wall())).timeIntervalSince1970
+        if today != coverageProbeDay { probeCoverage() }
+    }
+
+    /// Read-only: reads `recentActions` and coverage, writes `state.activity`.
+    private func recomputeActivity() {
+        if oneShotMode {
+            state.activity = .notRecorded(reason: "not read by --print-menu")
+        } else if observeOnly {
+            state.activity = .notRecorded(reason: "another Swapless is acting")
+        } else if !historyOpened {
+            state.activity = .notRecorded(reason: "history off")
+        } else {
+            state.activity = .summary(ActivitySummary.summarize(actions: recentActions, sampleDays: coverage,
+                                                                now: Clock.wall(), timeZone: .autoupdatingCurrent))
+        }
+    }
+
+    /// The headless `activity` line: on the first base tick, then whenever its content changes.
+    private func emitActivity(t: Double) {
+        guard sink.wantsJSON("activity") else { return }
+        recomputeActivity()
+        let body = JSON.object(state.activity.jsonFields).serialized
+        guard body != lastActivityLine else { return }
+        lastActivityLine = body
+        sink.emit("activity", .object([("type", .string("activity")), ("t", .double(t))] + state.activity.jsonFields))
     }
 
     private func historyOff(_ why: String) {
@@ -350,25 +438,29 @@ public final class Engine: @unchecked Sendable {
         let groups = grouper.group(snap)
         history?.bufferSystem(SystemRow(t: snap.wallTime, system: snap.system,
                                         intervalSeconds: config.sampleInterval))
+        recentActions.removeAll { $0.ts < snap.wallTime - Self.actionsKeptSeconds }
         runDetector(snap, groups: groups)
         lastSnapshot = snap
         lastGroups = groups
         if !observeOnly { evaluateRules(snap) }
         state.ruleDisplays = ruleDisplays(snap)
         flushHistory(now: snap.wallTime, force: false)
-        let reading = selfMeter.read(uptime: now)
+        let reading = selfMeter.read(uptime: now, menuOpenDuringInterval: menuOpen)
         if seq % 10 == 0 {
-            sink.log(.`self`, SelfMeter.logLine(reading, menuOpenSeconds: menuOpenSeconds(now)))
+            sink.log(.`self`, SelfMeter.logLine(reading, menuOpenSeconds: menuOpenSeconds(now),
+                                                displaySweeps: displaySweeps))
         }
         emitSample(snap, groups: groups, reading: reading)
+        emitActivity(t: snap.wallTime)
         publish(snap, groups: groups, reading: reading)
         seq += 1
     }
 
-    /// A display-only sweep while the menu is open (every 2 s). A sweep that lands on a due
+    /// A display-only sweep while the menu is open (every 5 s). A sweep that lands on a due
     /// base tick counts as that tick.
     private func displaySweep() {
         guard !exiting, !draining else { return }
+        displaySweeps += 1
         let now = Clock.uptime()
         if now + 1.0 >= nextBaseDue {
             baseTick()
@@ -474,6 +566,7 @@ public final class Engine: @unchecked Sendable {
                                            afterMB: nil, outcome: outcome, dryRun: dry,
                                            wsBeforeMB: wsBefore, wsAfterMB: nil))
             maxPerDayCheck(ruleId: intent.ruleId, now: now)
+            recomputeActivity()
         }
         switch result {
         case .identityChanged:
@@ -547,7 +640,8 @@ public final class Engine: @unchecked Sendable {
             pause(ruleId, reason: result.outcome, at: now)
         }
         state.ruleDisplays = lastSnapshot.map(ruleDisplays) ?? state.ruleDisplays
-        onState?(state)
+        recomputeActivity()
+        sendState()
         if draining && verifies.isEmpty { reallyFinish(exitCode: pendingExitCode) }
     }
 
@@ -629,7 +723,8 @@ public final class Engine: @unchecked Sendable {
     private func republish() {
         state.rules = rules
         if let s = lastSnapshot { state.ruleDisplays = ruleDisplays(s) }
-        onState?(state)
+        recomputeActivity()
+        sendState()
     }
 
     private func checkDegrade() {
@@ -660,13 +755,16 @@ public final class Engine: @unchecked Sendable {
     public func setMenuOpen(_ open: Bool) {
         queue.async { [self] in
             guard open != menuOpen else { return }
-            menuOpen = open
             let now = Clock.uptime()
+            // T6: a reading at every transition, labelled with the state before it, so each
+            // interval between two readings is entirely open or entirely closed.
+            _ = selfMeter.read(uptime: now, menuOpenDuringInterval: menuOpen)
+            menuOpen = open
             if open {
                 menuOpenSince = now
                 reloadRules(force: false)
                 let t = DispatchSource.makeTimerSource(queue: queue)
-                t.schedule(deadline: .now(), repeating: 2.0, leeway: .milliseconds(200))
+                t.schedule(deadline: .now(), repeating: Self.displayInterval, leeway: .milliseconds(500))
                 t.setEventHandler { [weak self] in self?.displaySweep() }
                 t.resume()
                 displayTimer = t
@@ -757,8 +855,10 @@ public final class Engine: @unchecked Sendable {
         state.seq = seq
         state.historyError = historyError
         state.observeOnly = observeOnly
+        probeCoverageIfNewDay()
+        recomputeActivity()
         if let reading { state.overBudget = SelfMeter.overBudget(reading, topMode: source !== live, menuShown: menuEverShown) }
-        onState?(state)
+        sendState()
     }
 
     // MARK: - Exit
@@ -812,6 +912,8 @@ public final class Engine: @unchecked Sendable {
     /// lock, no writes. Runs synchronously on the engine queue.
     public func oneShot() -> (snapshot: Snapshot, groups: [ProcessGroup], state: EngineState) {
         queue.sync {
+            oneShotMode = true
+            recomputeActivity()
             runSelfCheck(initial: true)
             if source !== live { refreshTopIfDue(force: true) }
             let url = RulesFile.url(in: config.stateDir)

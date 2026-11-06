@@ -118,22 +118,23 @@ struct SelfMeterTests {
     @Test func selfLineFormat() {
         let r = SelfReading(cpuSeconds: 1.23456, childCpuSeconds: 0.5, cpuPercent: 0.0123,
                             footprint: 21_000_000, peakFootprint: 25_000_000)
-        #expect(SelfMeter.logLine(r, menuOpenSeconds: 12.34)
-            == "self cpuSeconds=1.235 childCpuSeconds=0.500 cpuPct10m=0.012 footprint=21000000 peak=25000000 menuOpenSeconds=12.3")
+        #expect(SelfMeter.logLine(r, menuOpenSeconds: 12.34, displaySweeps: 0)
+            == "self cpuSeconds=1.235 childCpuSeconds=0.500 cpuPct10m=0.012 footprint=21000000 peak=25000000 menuOpenSeconds=12.3 cpuPct10mIdle=none menuOpenCpuSeconds=0.000 displaySweeps=0")
     }
 
     /// Owner, 2026-11-05: ≤ 30 MiB before the menu is first shown, ≤ 40 MiB after.
     @Test func overBudgetFootprintLimitDependsOnTheMenu() {
         func r(_ mib: Double, cpu: Double = 0.1) -> SelfReading {
             SelfReading(cpuSeconds: 1, childCpuSeconds: 0, cpuPercent: cpu,
-                        footprint: UInt64(mib * 1_048_576), peakFootprint: UInt64(mib * 1_048_576))
+                        footprint: UInt64(mib * 1_048_576), peakFootprint: UInt64(mib * 1_048_576),
+                        cpuPercentIdle: cpu)
         }
         #expect(!SelfMeter.overBudget(r(29.9), topMode: false, menuShown: false))
         #expect(SelfMeter.overBudget(r(30.1), topMode: false, menuShown: false))
         #expect(!SelfMeter.overBudget(r(34.4), topMode: false, menuShown: true))
         #expect(!SelfMeter.overBudget(r(39.9), topMode: false, menuShown: true))
         #expect(SelfMeter.overBudget(r(40.1), topMode: false, menuShown: true))
-        #expect(SelfMeter.overBudget(r(20, cpu: 0.25), topMode: false, menuShown: true))   // CPU unchanged
+        #expect(SelfMeter.overBudget(r(20, cpu: 0.25), topMode: false, menuShown: true))   // idle CPU over
         #expect(!SelfMeter.overBudget(r(20, cpu: 0.25), topMode: true, menuShown: false))
     }
 

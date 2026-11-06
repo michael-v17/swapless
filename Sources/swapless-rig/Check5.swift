@@ -21,6 +21,19 @@ enum Check5 {
         let menuOpenSeconds: Double
         let psTime: Double?
         let physFootprint: UInt64?
+        /// `cpuPct10mIdle` as printed (nil when the field is missing).
+        let idleRaw: String?
+    }
+
+    /// The `self` line's fields, by key.
+    static func fields(_ text: String) -> [String: String] {
+        guard let r = text.range(of: "self cpuSeconds=") else { return [:] }
+        var fields: [String: String] = [:]
+        for part in text[r.lowerBound...].split(separator: " ") {
+            let kv = part.split(separator: "=", maxSplits: 1)
+            if kv.count == 2 { fields[String(kv[0])] = String(kv[1]) }
+        }
+        return fields
     }
 
     static func parse(_ text: String) -> (cpu: Double, fp: UInt64, menu: Double)? {
@@ -97,7 +110,7 @@ enum Check5 {
             }
         }
         // The peak test and the (offscreen) menu test run whatever happened above.
-        return combine([outcome, peakTest(rig), menuTest(rig)])
+        return combine([outcome, peakTest(rig), menuTest(rig), menuOpenTest(rig)])
     }
 
     /// Any fail fails (all reasons kept); else any skip skips; else pass.
@@ -140,7 +153,7 @@ enum Check5 {
             let ps = rig.psTime(pid: pid)
             let fpt = rig.footprintTool(pid: pid)
             lines.append(SelfLine(arrived: arrived, cpuSeconds: p.cpu, footprint: p.fp, menuOpenSeconds: p.menu,
-                                  psTime: ps, physFootprint: fpt?.phys))
+                                  psTime: ps, physFootprint: fpt?.phys, idleRaw: fields(text)["cpuPct10mIdle"]))
             rig.report.line(String(format: "  check 5: self line %d: cpuSeconds %.3f (ps %@) footprint %@ (footprint(1) %@) menuOpenSeconds %.1f",
                                    lines.count, p.cpu, ps.map { String(format: "%.2f", $0) } ?? "nil", mb(p.fp),
                                    fpt.map { mb($0.phys) } ?? "nil", p.menu))
@@ -159,6 +172,17 @@ enum Check5 {
         guard let psA = a.psTime, let psB = b.psTime else { return .fail("ps time unavailable") }
         let cpuPct = (psB - psA) / (b.arrived - a.arrived) * 100
         if cpuPct > cpuLimit { problems.append(String(format: "CPU %.3f %% > %.1f %%", cpuPct, cpuLimit)) }
+        // v1-menu-today: the idle figure the footer shows agrees with the window's CPU (the
+        // menu was closed throughout: the disturbance rule re-measures otherwise).
+        var idleNote = "cpuPct10mIdle missing"
+        if let raw = b.idleRaw, let idle = Double(raw) {
+            let diff = abs(idle - cpuPct)
+            idleNote = String(format: "cpuPct10mIdle %.3f vs window %.3f (|Δ| %.3f pp, limit %.2f)", idle, cpuPct, diff, idleTolerance)
+            if diff > idleTolerance { problems.append("idle agreement: " + idleNote) }
+        } else {
+            problems.append("self-report: line 3 cpuPct10mIdle is \(b.idleRaw ?? "missing")")
+        }
+        rig.report.line("  check 5: idle agreement: " + idleNote)
         for (i, l) in [a, lines[1], b].enumerated() {
             if let ps = l.psTime, abs(l.cpuSeconds - ps) > max(0.05, 0.10 * ps) {
                 problems.append(String(format: "self-report %d: cpuSeconds %.3f vs ps %.2f", i + 1, l.cpuSeconds, ps))
@@ -183,8 +207,8 @@ enum Check5 {
             problems.append(String(format: "phys_footprint_peak %@ > %.0f MiB", mb(fpt.peak), peakMiB))
         }
         if fpt == nil { problems.append("footprint(1) failed at the end") }
-        let summary = String(format: "window %.0f s · CPU %.3f %% (Δps %.2f s) · top MEM %@ (limit %.0f MiB, %@) · peak %@",
-                             b.arrived - a.arrived, cpuPct, psB - psA, topMem.map(mb) ?? "nil", idleLimit,
+        let summary = String(format: "window %.0f s · CPU %.3f %% (Δps %.2f s) · %@ · top MEM %@ (limit %.0f MiB, %@) · peak %@",
+                             b.arrived - a.arrived, cpuPct, psB - psA, idleNote, topMem.map(mb) ?? "nil", idleLimit,
                              menuUsed ? "menu used" : "menu never shown", fpt.map { mb($0.peak) } ?? "nil")
         rig.report.line("  check 5: " + summary)
         return problems.isEmpty ? .pass(summary) : .fail(summary + "; " + problems.joined(separator: "; "))
@@ -195,7 +219,7 @@ enum Check5 {
     /// announced session the owner approved (owner rule, DECISIONS.md 2026-11-05). The release
     /// app shows its menu `menuShows` times, walking a few group submenus each time (the app's
     /// `SWAPLESS_RIG_MENU_SHOWS` hook). Every planned submenu must open, and none may close on
-    /// its own (the 2 s refresh must never close an open submenu). After the menu has stayed
+    /// its own (a refresh must never close an open submenu). After the menu has stayed
     /// closed for `menuIdleSeconds`, footprint(1) must be ≤ 40 MiB (menu used) and the peak
     /// ≤ 45 MiB.
     static let menuShows = 10
@@ -320,6 +344,74 @@ enum Check5 {
             return problems.isEmpty ? .pass(line) : .fail(line + "; " + problems.joined(separator: "; "))
         } catch {
             return .fail("menu draw test: \(error)")
+        }
+    }
+
+    /// |cpuPct10mIdle − window CPU| limit, percentage points (v1-menu-today S5).
+    static let idleTolerance = 0.02
+
+    /// Menu-open test, offscreen (v1-menu-today S5, T4): the release app with no status item
+    /// simulates a 60 s menu open on never-shown menus, with three group submenus opened in turn
+    /// (`SWAPLESS_RIG_MENU_OPEN`). A regression gate for the 5 s cadence and the single refresh
+    /// per publish; it can't see on-screen drawing (that is the owner's acceptance).
+    static let menuOpenSeconds = 60
+
+    static func menuOpenTest(_ rig: Rig) -> Outcome {
+        let hint = "/usr/bin/log show --last 15m --predicate 'processID == %d'"
+        do {
+            let dir = try rig.tempStateDir()
+            var env = rig.baseEnv()
+            env["SWAPLESS_STATE_DIR"] = dir
+            env["SWAPLESS_DRY_RUN"] = "1"
+            env["SWAPLESS_RIG_MENU_OPEN"] = String(menuOpenSeconds)
+            let exe = rig.repoRoot + "/Swapless.app/Contents/MacOS/Swapless"
+            let c = Child(name: "c5-open", executable: exe, arguments: ["--duration", "360"], environment: env,
+                          stderrPath: "\(rig.rigDir)/c5-open.stderr")
+            let started = now()
+            try c.start()
+            defer { c.stop() }
+            func missing(_ what: String, _ deadline: Double) -> Outcome {
+                if !c.isRunning { return .fail("menu-open test: exited early (status \(c.exitStatus)) before its \(what) line") }
+                return .fail("menu-open test: TIMEOUT: no \(what) line within \(Int(deadline)) s of start. " + String(format: hint, c.pid))
+            }
+            guard let s = c.waitEvent("start", timeout: 60) else { return missing("start", 60) }
+            guard let r = c.waitEvent("rules", from: s.index + 1, timeout: 30) else { return missing("rules", 90) }
+            if (s.obj["dryRun"] as? Bool) != true || realpathString((s.obj["stateDir"] as? String) ?? "") != realpathString(dir)
+                || (r.obj["status"] as? String) != "ok" {
+                return .fail("menu-open test: start-line guard")
+            }
+            guard let m = c.waitEvent("menuOpen", from: r.index + 1, timeout: max(0, started + 180 - now())) else {
+                return missing("menuOpen", 180)
+            }
+            guard let tl = c.waitEvent("menuOpenTail", from: m.index + 1, timeout: max(0, started + 330 - now())) else {
+                return missing("menuOpenTail", 330)
+            }
+            let o = m.obj
+            let sweeps = JSONRead.int(o["displaySweeps"]) ?? -1
+            let publishes = JSONRead.int(o["publishes"]) ?? -1
+            let refreshes = JSONRead.int(o["refreshes"]) ?? -1
+            let batches = JSONRead.int(o["compressedReadBatches"]) ?? -1
+            let opened = JSONRead.int(o["submenusOpened"]) ?? -1
+            let cpuOpen = JSONRead.double(o["cpuSecondsOpen"]) ?? -1
+            let pctOpen = JSONRead.double(o["cpuPercentOpen"]) ?? .infinity
+            let windows = JSONRead.int(o["windows"]) ?? -1
+            let tailCpu = JSONRead.double(tl.obj["cpuSeconds"]) ?? -1
+            let tailPct = JSONRead.double(tl.obj["cpuPercent"]) ?? .infinity
+            let line = String(format: "menu-open test: %d s open, displaySweeps %d (12–13), publishes %d (≤ %d), refreshes %d (≤ %d), compressedReadBatches %d (== 3), submenusOpened %d, cpuSecondsOpen %.3f, cpuPercentOpen %.3f %% (≤ 1.0), tail %.3f s = %.3f %% over 120 s (≤ 0.3), windows %d (offscreen: the on-screen cost is the owner's acceptance)",
+                              menuOpenSeconds, sweeps, publishes, sweeps + 2, refreshes, publishes + 1, batches, opened,
+                              cpuOpen, pctOpen, tailCpu, tailPct, windows)
+            rig.report.line("  check 5: " + line)
+            var problems: [String] = []
+            if !(12...13).contains(sweeps) { problems.append("displaySweeps \(sweeps) not in 12–13") }
+            if publishes > sweeps + 2 { problems.append("publishes \(publishes) > displaySweeps + 2") }
+            if refreshes > publishes + 1 { problems.append("refreshes \(refreshes) > publishes + 1") }
+            if batches != 3 { problems.append("compressedReadBatches \(batches) ≠ 3") }
+            if pctOpen > 1.0 { problems.append(String(format: "cpuPercentOpen %.3f %% > 1.0 %%", pctOpen)) }
+            if tailPct > 0.3 { problems.append(String(format: "tail %.3f %% > 0.3 %%", tailPct)) }
+            if windows != 0 { problems.append("\(windows) windows (must be 0)") }
+            return problems.isEmpty ? .pass(line) : .fail(line + "; " + problems.joined(separator: "; "))
+        } catch {
+            return .fail("menu-open test: \(error)")
         }
     }
 

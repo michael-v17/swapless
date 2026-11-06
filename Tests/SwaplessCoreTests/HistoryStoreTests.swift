@@ -98,4 +98,35 @@ struct HistoryStoreTests {
         #expect(h.insertAction(ts: now, ruleId: "a", target: "wallpaper", pids: [], beforeMB: 1, outcome: "pending",
                                dryRun: false) == nil)
     }
+
+    // MARK: v1-menu-today
+
+    @Test func daysWithSamplesFindsTheRangesWithRows() {
+        let dir = makeTempDir()
+        let h = HistoryStore(stateDir: dir, currentRuleIds: [], now: now)
+        h.bufferSystem(sys(now - 86400 * 2 + 10))
+        h.bufferSystem(sys(now - 30))
+        #expect(h.flush(now: now))
+        let ranges = [(start: now - 86400, end: now), (start: now - 86400 * 2, end: now - 86400),
+                      (start: now - 86400 * 3, end: now - 86400 * 2)]
+        #expect(h.daysWithSamples(ranges) == [now - 86400, now - 86400 * 2])
+        h.close()
+        #expect(h.daysWithSamples(ranges) == nil)
+    }
+
+    @Test func nineDaysOfActionsSurviveAReopen() {
+        let dir = makeTempDir()
+        let h = HistoryStore(stateDir: dir, currentRuleIds: ["w"], now: now)
+        for d in [0.5, 3, 8.5, 9.5] {
+            _ = h.insertAction(ts: now - d * 86400, ruleId: "w", target: "wallpaper", pids: [1], beforeMB: 1200,
+                               outcome: "pending", dryRun: false)
+        }
+        let id = h.actions(since: 0).first!.id
+        #expect(h.updateOutcome(id: id, outcome: "ok", afterMB: 100, wsBeforeMB: 1500, wsAfterMB: 1100))
+        h.close()
+        let h2 = HistoryStore(stateDir: dir, currentRuleIds: ["w"], now: now)
+        let rows = h2.actions(since: now - 9 * 86400)
+        #expect(rows.count == 3)
+        #expect(rows.contains { $0.afterMB == 100 && $0.wsAfterMB == 1100 && $0.outcome == "ok" })
+    }
 }

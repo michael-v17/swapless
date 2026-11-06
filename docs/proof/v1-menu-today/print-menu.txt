@@ -1,0 +1,108 @@
+Free 40 % · Pressure normal
+Compressed 4.5 GB · Swap 1.9 GB · Swap-in —
+────────
+Google Chrome: 2.22 GB
+    Google Chrome Helper (Aperitif Renderer): 313 MB
+    Google Chrome Helper (Aperitif Renderer): 277 MB
+    Google Chrome Helper (Aperitif Renderer): 268 MB
+    Google Chrome: 264 MB
+    Google Chrome Helper (Aperitif Renderer): 171 MB
+    Google Chrome Helper (Aperitif): 167 MB
+    Google Chrome Helper (Aperitif Renderer): 131 MB
+    Google Chrome Helper (Aperitif Renderer): 107 MB
+    Google Chrome Helper (Aperitif Renderer): 64 MB
+    Google Chrome Helper (Aperitif Renderer): 64 MB
+    Google Chrome Helper (Aperitif Renderer): 59 MB
+    Google Chrome Helper (Aperitif Renderer): 52 MB
+    Google Chrome Helper (Aperitif Renderer): 42 MB
+    Google Chrome Helper (Aperitif Renderer): 35 MB
+    Google Chrome Helper (Aperitif Renderer): 33 MB
+    + 16 smaller processes: 224 MB
+WindowServer · system: 1.17 GB
+    + 2 system processes: 1.17 GB
+        WindowServer
+        MTLCompilerService
+Portal: 931 MB
+    Portal: 703 MB
+    VTDecoderXPCService: 212 MB
+    Portal Desktop Helper: 6 MB
+    SetStoreUpdateService: 3 MB
+    com.apple.audio.SandboxHelper: 3 MB
+    intents_helper: 3 MB
+Safari: 877 MB
+    Web Content (pid 24023): 335 MB
+    Web Content (pid 92169): 170 MB
+    Safari: 133 MB
+    Web Content (pid 24028): 46 MB
+    com.apple.WebKit.Networking: 38 MB
+    com.apple.WebKit.GPU: 34 MB
+    com.apple.appkit.xpc.openAndSavePanelService: 31 MB
+    MTLCompilerService: 13 MB
+    Web Content (pid 24122): 9 MB
+    Web Content (pid 91977): 9 MB
+    Web Content (pid 92030): 9 MB
+    com.apple.Safari.SandboxBroker: 7 MB
+    QuickLookUIService: 6 MB
+    ImageIOXPCService: 5 MB
+    com.apple.Safari.SearchHelper: 4 MB
+    + 9 smaller processes: 28 MB
+Warp: 807 MB
+    stable: 642 MB
+    SourceKitService: 89 MB
+    com.apple.SafariPlatformSupport.Helper: 18 MB
+    stable: 9 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    SetStoreUpdateService: 3 MB
+    caffeinate: 2 MB
+Claude Code · project-a: 547 MB
+    2.1.318: 373 MB
+    node: 54 MB
+    node: 44 MB
+    node: 38 MB
+    node: 35 MB
+    zsh: 2 MB
+    sleep: 1 MB
+Claude Code · project-b: 502 MB
+    2.1.318: 227 MB
+    node: 66 MB
+    node: 55 MB
+    node: 42 MB
+    node: 42 MB
+    node: 35 MB
+    node: 35 MB
+Claude Code · project-a: 496 MB
+    2.1.318: 323 MB
+    node: 54 MB
+    node: 44 MB
+    node: 40 MB
+    node: 35 MB
+TGOnDeviceInferenceProviderService · system: 468 MB
+    + 1 system processes: 468 MB
+        TGOnDeviceInferenceProviderService
+iTerm2: 451 MB
+    iTerm2: 414 MB
+    com.apple.SafariPlatformSupport.Helper: 17 MB
+    ssh: 4 MB
+    ssh: 4 MB
+    pidinfo: 4 MB
+    ssh: 4 MB
+    SetStoreUpdateService: 3 MB
+    iTermServer-3.7.6: 2 MB
+Everything else: 9.49 GB in 607 groups
+────────
+✓ Wallpaper guard: restarts above 1 GB
+Watching: WallpaperImageExtension 221 MB
+────────
+Today: not recorded (not read by --print-menu)
+────────
+Swapless — % CPU idle · 5 MB · measuring: full
+Open at login
+Quit Swapless  ⌘Q

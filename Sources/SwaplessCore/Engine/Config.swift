@@ -51,6 +51,10 @@ public struct Config: Sendable {
     /// N times, 2 s apart, into a window never ordered on screen, then keep running so the rig
     /// can measure the idle footprint (check 5's menu test).
     public var rigMenuDraws: Int?
+    /// `SWAPLESS_RIG_MENU_OPEN=S` (app mode, 50…600): no status item; simulate the menu open
+    /// for S seconds on never-shown menus, then print `menuOpen` and `menuOpenTail` lines
+    /// (v1-menu-today S5, check 5's offscreen menu-open test).
+    public var rigMenuOpen: Int?
     /// DEBUG builds only.
     public var rigHelperPath: String?
     /// A release build saw `SWAPLESS_RIG_HELPER_PATH` and ignored it (one log line).
@@ -160,6 +164,18 @@ public struct Config: Sendable {
             draws = n
         }
 
+        // Simulated menu open (app mode only; ignored by --headless). Exclusive with the others.
+        var menuOpen: Int?
+        if let raw = env["SWAPLESS_RIG_MENU_OPEN"], flavour.mode == .menuApp {
+            guard let n = Int(raw), (50...600).contains(n) else {
+                return .failure(ConfigError("SWAPLESS_RIG_MENU_OPEN", "must be an integer 50…600, got '\(raw)'"))
+            }
+            guard cycles == nil, shows == nil, draws == nil else {
+                return .failure(ConfigError("SWAPLESS_RIG_MENU_OPEN", "can't be combined with SWAPLESS_RIG_MENU_CYCLES, SWAPLESS_RIG_MENU_SHOWS or SWAPLESS_RIG_MENU_DRAWS"))
+            }
+            menuOpen = n
+        }
+
         // Rig helper path (DEBUG only).
         var helperPath: String?
         var helperIgnored = false
@@ -197,7 +213,7 @@ public struct Config: Sendable {
             stateDir: stateDir, stateDirEnv: rawDir, usesDefaultStateDir: usesDefault,
             sampleInterval: interval, dryRun: dryRun, detectorConfig: detector,
             detectorConfigPath: detectorPath, forceTop: forceTop, rigMenuCycles: cycles,
-            rigMenuShows: shows, rigMenuDraws: draws,
+            rigMenuShows: shows, rigMenuDraws: draws, rigMenuOpen: menuOpen,
             rigHelperPath: helperPath, rigHelperIgnored: helperIgnored, duration: duration,
             flavour: flavour, defaultStateDir: defaultStateDir))
     }

@@ -136,6 +136,28 @@ struct ConfigTests {
         }
     }
 
+    /// v1-menu-today S5.
+    @Test func menuOpen() throws {
+        let dir = root.path
+        for release in [true, false] {
+            #expect(try load(["SWAPLESS_STATE_DIR": dir, "SWAPLESS_RIG_MENU_OPEN": "60"], release: release, mode: .menuApp).get().rigMenuOpen == 60)
+        }
+        #expect(try load(["SWAPLESS_STATE_DIR": dir, "SWAPLESS_RIG_MENU_OPEN": "50"], release: true, mode: .menuApp).get().rigMenuOpen == 50)
+        #expect(try load(["SWAPLESS_STATE_DIR": dir, "SWAPLESS_RIG_MENU_OPEN": "600"], release: true, mode: .menuApp).get().rigMenuOpen == 600)
+        for bad in ["49", "601", "x"] {
+            #expect(throws: ConfigError.self) {
+                try load(["SWAPLESS_STATE_DIR": dir, "SWAPLESS_RIG_MENU_OPEN": bad], release: true, mode: .menuApp).get()
+            }
+            // Ignored outside app mode, as _DRAWS is.
+            #expect(try load(["SWAPLESS_STATE_DIR": dir, "SWAPLESS_RIG_MENU_OPEN": bad], release: true, mode: .headless).get().rigMenuOpen == nil)
+        }
+        for other in ["SWAPLESS_RIG_MENU_CYCLES", "SWAPLESS_RIG_MENU_SHOWS", "SWAPLESS_RIG_MENU_DRAWS"] {
+            #expect(throws: ConfigError.self) {
+                try load(["SWAPLESS_STATE_DIR": dir, "SWAPLESS_RIG_MENU_OPEN": "60", other: "2"], release: true, mode: .menuApp).get()
+            }
+        }
+    }
+
     @Test func rigHelperPathDebugOnly() throws {
         let dir = root.path
         let d = try load(["SWAPLESS_STATE_DIR": dir, "SWAPLESS_RIG_HELPER_PATH": "/x/swapless-leak-helper"], release: false, mode: .headless).get()

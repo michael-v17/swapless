@@ -16,8 +16,8 @@ struct MenuModelTests {
         st.snapshot = snap
         st.groups = grouper().group(snap)
         st.rules = rules
-        st.selfReading = SelfReading(cpuSeconds: 1, childCpuSeconds: 0, cpuPercent: 0.02,
-                                     footprint: 21 * MB, peakFootprint: 25 * MB)
+        st.selfReading = SelfReading(cpuSeconds: 1, childCpuSeconds: 0, cpuPercent: 0.5,
+                                     footprint: 21 * MB, peakFootprint: 25 * MB, cpuPercentIdle: 0.02)
         return st
     }
 
@@ -37,7 +37,7 @@ struct MenuModelTests {
         let t = titles(MenuModel.build(MenuInput(state: state())))
         #expect(t[0] == "Free 62 % · Pressure normal")
         #expect(t[1] == "Compressed 2.7 GB · Swap 1.0 GB · Swap-in 0.0 MB/s")
-        #expect(t.contains("Swapless 0.02 % CPU · 21 MB · measuring: full"))
+        #expect(t.contains("Swapless 0.02 % CPU idle · 21 MB · measuring: full"))
         #expect(t.last == "Quit Swapless")
     }
 
@@ -177,9 +177,89 @@ struct MenuModelTests {
         st.overBudget = true
         st.historyError = "disk full"
         st.observeOnly = true
-        #expect(MenuModel.footer(st) == "Swapless 0.02 % CPU · 21 MB · measuring: degraded (top) · dry run · over budget · history off: disk full · another Swapless is acting")
+        #expect(MenuModel.footer(st) == "Swapless 0.02 % CPU idle · 21 MB · measuring: degraded (top) · dry run · over budget · history off: disk full · another Swapless is acting")
         st = state()
         st.source = .none
-        #expect(MenuModel.footer(st) == "Swapless 0.02 % CPU · 21 MB · not measuring system processes")
+        #expect(MenuModel.footer(st) == "Swapless 0.02 % CPU idle · 21 MB · not measuring system processes")
+    }
+
+    /// v1-menu-today S1: the footer shows the menu-closed average, labelled idle.
+    @Test func footerShowsIdleCPU() {
+        var st = state()
+        st.selfReading = SelfReading(cpuSeconds: 1, childCpuSeconds: 0, cpuPercent: 0.95,
+                                     footprint: 33 * MB, peakFootprint: 40 * MB, cpuPercentIdle: 0.11)
+        #expect(MenuModel.footer(st) == "Swapless 0.11 % CPU idle · 33 MB · measuring: full")
+        st.selfReading?.cpuPercentIdle = nil
+        #expect(MenuModel.footer(st) == "Swapless — % CPU idle · 33 MB · measuring: full")
+        st.overBudget = true
+        #expect(MenuModel.footer(st) == "Swapless — % CPU idle · 33 MB · measuring: full · over budget")
+        st.selfReading = nil
+        st.overBudget = false
+        #expect(MenuModel.footer(st) == "Swapless · measuring: full")
+    }
+
+    // MARK: v1-menu-today S4: the Today row
+
+    func counts(_ n: Int, failed: Int = 0, freed: Double? = nil) -> ActivityCounts {
+        ActivityCounts(byKind: n > 0 ? [.restart: n] : [:], failed: failed, freedMB: freed)
+    }
+
+    @Test func activityBodies() {
+        #expect("Today: " + MenuModel.activityBody(counts(2, freed: 2851.1)) == "Today: 2 restarts · 2.8 GB freed")
+        #expect("Today: " + MenuModel.activityBody(counts(1)) == "Today: 1 restart")
+        #expect("Today: " + MenuModel.activityBody(counts(3, failed: 1, freed: 2150)) == "Today: 3 restarts (1 failed) · 2.1 GB freed")
+        #expect("Today: " + MenuModel.activityBody(counts(0)) == "Today: no restarts")
+        #expect("7 days: " + MenuModel.activityBody(counts(7, freed: 9113.6)) == "7 days: 7 restarts · 8.9 GB freed")
+        #expect(MenuModel.activityBody(counts(1, freed: -50)) == "1 restart · 0 MB freed")
+        #expect(MenuModel.activityBody(counts(1, freed: 512.4)) == "1 restart · 512 MB freed")
+    }
+
+    var tz: TimeZone { TimeZone(identifier: "America/Mexico_City")! }
+
+    func summaryState() -> EngineState {
+        var st = state()
+        let now = localTs(2026, 11, 6, 12, 0, tz: tz)
+        let rows = [actionRow(id: 1, ts: localTs(2026, 11, 6, 9, 0, tz: tz), before: 1258, after: 133, wsBefore: 1524, wsAfter: 1139),
+                    actionRow(id: 2, ts: localTs(2026, 11, 6, 10, 0, tz: tz), before: 1075.2, after: 148.1, wsBefore: 1495.5, wsAfter: 1081.5)]
+        st.activity = .summary(ActivitySummary.summarize(actions: rows, sampleDays: ["2026-11-05", "2026-11-04", "2026-11-02"],
+                                                         now: now, timeZone: tz))
+        return st
+    }
+
+    @Test func todayRowAndSubmenu() throws {
+        let items = MenuModel.build(MenuInput(state: summaryState()))
+        let today = try #require(items.first { $0.slot == "today" })
+        #expect(today.title == "Today: 2 restarts · 2.8 GB freed")
+        #expect(today.enabled && today.action == nil)
+        let c = try #require(today.children)
+        #expect(c.map(\.slot) == ["today.day.0", "today.day.1", "today.day.2", "today.day.3", "today.day.4",
+                                  "today.day.5", "today.day.6", "today.sep", "today.total"])
+        #expect(c[0].title == "Today: 2 restarts · 2.8 GB freed")
+        #expect(c[1].title == "Yesterday: no restarts")
+        #expect(c[2].title == "Wed 4 Nov: no restarts")
+        #expect(c[3].title == "Tue 3 Nov: not running")
+        #expect(c[4].title == "Mon 2 Nov: no restarts")
+        #expect(c[6].title == "Sat 31 Oct: not running")
+        #expect(c[7].isSeparator)
+        #expect(c[8].title == "7 days: 2 restarts · 2.8 GB freed")
+        #expect(c.allSatisfy { !$0.enabled })
+        // Position: after sep.rules, then sep.today, then the footer.
+        let slots = items.map(\.slot)
+        let i = try #require(slots.firstIndex(of: "today"))
+        #expect(slots[i - 1] == "sep.rules")
+        #expect(slots[i + 1] == "sep.today")
+        #expect(slots[i + 2] == "footer")
+        // --print-menu text indents the 9 children.
+        let text = MenuModel.text([today])
+        #expect(text.split(separator: "\n").filter { $0.hasPrefix("    ") }.count == 9)
+    }
+
+    @Test func notRecordedReasons() {
+        for reason in ["history off", "another Swapless is acting", "not read by --print-menu"] {
+            let row = MenuModel.todayRow(.notRecorded(reason: reason))
+            #expect(row.title == "Today: not recorded (\(reason))")
+            #expect(!row.enabled)
+            #expect(row.children == nil)
+        }
     }
 }

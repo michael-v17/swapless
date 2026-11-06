@@ -135,6 +135,42 @@ enum Check3 {
 
 /// Check 4 · ruled-action-once.
 enum Check4 {
+    /// 4b · persistence across a relaunch (v1-menu-today S5): a fresh debug engine on check 4's
+    /// state dir, same rules and environment, reads the action back from `history.sqlite`.
+    static func check4b(_ rig: Rig, dir: String) -> (note: String, problems: [String]) {
+        do {
+            let e = try rig.startEngine(name: "c4b-engine", stateDir: dir,
+                                        env: ["SWAPLESS_SAMPLE_INTERVAL": "1",
+                                              "SWAPLESS_RIG_HELPER_PATH": rig.helperPath],
+                                        duration: 4, expectDryRun: false)
+            defer { if e.child.isRunning { e.child.stop() } else { e.child.waitExit(timeout: 30) } }
+            guard let a = e.child.waitEvent("activity", timeout: 10) else {
+                return ("4b: no activity line", ["4b: TIMEOUT: no activity line within 10 s of the relaunch"])
+            }
+            let o = a.obj
+            let total = o["total"] as? [String: Any]
+            let days = (o["days"] as? [[String: Any]]) ?? []
+            let restarts = JSONRead.int(total?["restarts"])
+            let failed = JSONRead.int(total?["failed"])
+            let freedNull = total?["freedMB"] is NSNull
+            let recorded = (o["recorded"] as? Bool) == true
+            let todayRunning = (days.first?["running"] as? Bool) == true
+            let note = "4b (relaunch on check 4's state dir): recorded \(recorded), total.restarts \(restarts.map(String.init) ?? "nil"), failed \(failed.map(String.init) ?? "nil"), freedMB \(freedNull ? "null" : "\(total?["freedMB"] ?? "missing")"), \(days.count) days, today running \(todayRunning)"
+            var why: [String] = []
+            if !recorded { why.append("4b: recorded is not true (reason \(o["reason"] ?? "nil"))") }
+            if restarts != 1 { why.append("4b: total.restarts \(restarts.map(String.init) ?? "nil"), expected 1") }
+            if failed != 0 { why.append("4b: total.failed \(failed.map(String.init) ?? "nil"), expected 0") }
+            if !freedNull { why.append("4b: total.freedMB is not null") }
+            if days.count != 7 { why.append("4b: \(days.count) days, expected 7") }
+            if !todayRunning { why.append("4b: days[0].running is not true") }
+            return (note, why)
+        } catch let e as CheckFailure {
+            return ("4b: \(e.why)", ["4b: \(e.why)"])
+        } catch {
+            return ("4b: \(error)", ["4b: \(error)"])
+        }
+    }
+
     static func run(_ rig: Rig) -> Outcome {
         var notes: [String] = []
         var problems: [String] = []
@@ -210,6 +246,23 @@ enum Check4 {
             }
             if FileManager.default.fileExists(atPath: bMarker) { problems.append("b.marker exists") }
             if !b.exitedOnItsOwn { problems.append("B did not exit 0 (exit \(b.exitStatus))") }
+
+            // v1-menu-today: the engine's own last activity line, then 4b.
+            if let last = engine.child.events("activity").last?.obj {
+                let total = last["total"] as? [String: Any]
+                let r = JSONRead.int(total?["restarts"])
+                notes.append("check-4 engine's last activity line: total.restarts \(r.map(String.init) ?? "nil")")
+                if r != 1 { problems.append("check-4 engine's last activity line: total.restarts \(r.map(String.init) ?? "nil"), expected 1") }
+            } else {
+                problems.append("the check-4 engine printed no activity line")
+            }
+            if engine.child.isRunning {
+                problems.append("4b: the check-4 engine is still running; 4b not run")
+            } else {
+                let (note, why) = check4b(rig, dir: dir)
+                notes.append(note)
+                problems += why
+            }
         } catch let e as CheckFailure {
             problems.append(e.why)
         } catch {

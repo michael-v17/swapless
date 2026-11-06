@@ -16,6 +16,92 @@ the owner if it's wrong?":
 `/ship-task` step 3 checks these on every shipment. Discretionary entries stay welcome —
 the triggers are a floor, not a ceiling.
 
+## 2026-11-06 · v1-menu-today: the footer measures idle CPU, the open menu refreshes every 5 s, and a "Today" row
+
+**Decided (owner, in the `/wingman` session for `specs/v1-menu-today.md`):**
+- **The footer's CPU number is the menu-closed 10-minute average, labelled `idle`**, and
+  "over budget" compares that number: `Swapless 0.11 % CPU idle · 33 MB · measuring: full`.
+  The CPU budget's limits don't change; this is the quantity they were always defined on, and
+  the one rig check 5 measures. It closes the entry below.
+- **The Today row's 7-day submenu ends with a 7-day total row.**
+- **The unattended run installs ad hoc; the owner re-signs at acceptance** with
+  `./scripts/make-app.sh release` and checks that `Open at login` is still on. The installed app
+  is self-signed, and an ad hoc build may not match the login item until then.
+- **"Freed"** (owner's input): before → after of the wallpaper extension plus WindowServer, as
+  the `actions` table records them.
+
+**Settled by the spec (argued there; numbers in `docs/research/2026-11-05-menu-cost-probes.md`):**
+- **A sweep costs ~20–25 ms of CPU in the app**: 24 ms per tick headless at 30 s, 30 ms at
+  2 s with JSON output. It is not the 1.7–5.1 ms in the v1-core entry below and `specs/v1-core.md`
+  § B. Idle still sits at a median 0.118 % of a core (54 closed 5-min intervals on 2026-11-05).
+  Making the sweep cheaper is deferred.
+- **The open menu cost ~6 % of a core on screen** (6.1 % and 6.7 %, from the installed app's own
+  `self` lines). That splits into one ~25 ms display sweep plus ~90 ms of on-screen redraws per
+  2 s: the menu refreshed twice per 2 s and rewrote every item each time.
+- **Open-menu cadence: one sweep when the menu opens, then every 5 s (was 2 s); one refresh
+  per sweep; unchanged items are not rewritten.** At 5 s a row lags p95 ≈ 45 MB, against
+  32 MB at 2 s, and big moves are steps a faster cadence only shows a few seconds sooner.
+  10 s is the fallback, and only the owner switches to it.
+- **Menu-open limits:** ≤ 2 % of a core on screen (owner's acceptance, from the `self`
+  lines), and ≤ 1 % in-process in the rig's offscreen test.
+- **Constraint for every later slice:** from now on, a `history.sqlite` schema change migrates
+  `actions` **in place**. The Today row shows that table, and the v1-core "unknown version →
+  move aside and start fresh" path would silently empty it. `v1-quit-on-close` adds quits as a
+  second `ActivityKind`.
+
+**Open:** in the two 5-min windows right after the owner's menu use (21:55–22:05), with the
+menu closed, the installed app spent 0.855 % and then 0.377 % of a core, while PR #1 was being
+merged. The offscreen probe shows no tail after close, so it is unattributed. The owner's
+acceptance for this slice watches for it.
+
+**Measured by the implementation run (2026-11-06, ad hoc release, `--budget` report in
+`docs/proof/v1-menu-today/rig-budget.txt`; all checks PASS):**
+- **Idle agreement (check 5):** `cpuPct10mIdle` 0.107 % against the window's 0.107 % from `ps`
+  (|Δ| 0.000 pp, limit 0.02) over 600 s, menu closed. The 5 closed intervals in
+  `self-report.txt` read 0.095–0.126 % (0.110 % overall).
+- **Offscreen menu open (check 5), 60 s, three group submenus:** `cpuPercentOpen` **0.585 %**
+  (limit 1.0; projected ~0.6), displaySweeps 12, publishes 13, refreshes 14 (the limit is
+  publishes + 1 = 14: the open refresh plus one per publish, so it sits exactly at the cap by
+  construction), compressedReadBatches 3, 0 windows. **Tail** 120 s after close: **0.084 %**
+  (limit 0.3). A debug trial run measured 0.858 % open and 0.122 % tail.
+- **4b:** a relaunch on check 4's state dir reads the action back: recorded, 1 restart, 0
+  failed, freed null, 7 days, today running.
+- The on-screen cost (≤ 2 %) and the tail on the real screen are still the owner's acceptance.
+
+**Owner's acceptance on screen (2026-11-06, self-signed release, `self-report-on-screen.txt`):**
+- Re-signed: `Authority=Swapless Self-Signed`, leaf `H"3699…"`; `Open at login` checked in the
+  menu (`--print-menu` never reads it: CLAUDE.md §3 corrected).
+- Screenshot: `Yesterday: 2 restarts · 2.8 GB freed` matches the two 2026-11-05 restarts
+  (2,851.1 MB); footer `0.10 % CPU idle · 31 MB`.
+- Open CPU over the session: **1.25 %** (999 s open) against the 2 % limit. Active use with
+  hovering cost **~3 %** (3.2 % over 173 s, 2.6 % over 29 s); left open untouched, 0.6–0.8 %.
+  No tail: 0.121–0.129 % closed, ≥ 10 min after the last close. Menu use never lit the flag
+  (idle max 0.191 %).
+- **Decided (owner):** ~3 % of a core while the menu is in active use is accepted ("worth it if
+  it helps with memory"). The 5 s cadence stays; the 10 s fallback is not taken.
+- **Seen:** right after launch the idle figure read 0.209 % (startup cost in the first
+  window), so the footer may show `over budget` for a few minutes after launch. Not menu use
+  and not new in this slice.
+
+**Readings the spec left open (the run's calls):**
+- `menuHasKeyEquivalent`: the SDK header says "set target and action on return", so returning
+  `true` without them would leave ⌘Q with no action. Group submenus return `false`. Other menus
+  look up their enabled item with the matching key and modifiers, set its target and action,
+  and return `true`, or return `false` when none matches.
+- `SelfMeter` merges consecutive open intervals into one. Idle skips them either way, and the
+  merge keeps memory bounded however long the menu stays open. Trimming keeps the intervals
+  back to the one that crosses 600 s of closed time.
+- `NSMenuItem.update` clears target, action and represented object whenever a row has no
+  action and the item had one. v1-core cleared them only for rows without children; the cases
+  differ only for a row that switches from an action to a submenu, which no slot does today.
+- A day is `running` when it has a counted row (dry runs don't count) or a `system_samples` row;
+  today always is.
+- The new Swift Testing suite is `SelfMeterIdleTests` in `SelfMeterTests.swift`: a suite named
+  `SelfMeterTests` already exists in `MeasurementTests.swift`.
+- The P3 rig run (`--only 3,4`) saw the installed app's seeded wallpaper guard restart the
+  wallpaper during check 2's scenario; check 3 attributes it to the installed app's logged
+  action. That is the owner's seeded rule, not a mandatory trigger.
+
 ## 2026-11-05 · v1-core ships with a false "over budget" on CPU after the menu is used
 
 **Trigger:** "a shipped build exceeded its own overhead budget". Its own footer says so after

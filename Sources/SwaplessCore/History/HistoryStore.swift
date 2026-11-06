@@ -403,6 +403,29 @@ public final class HistoryStore: @unchecked Sendable {
                          wsBeforeMB: optDouble(9), wsAfterMB: optDouble(10))
     }
 
+    /// v1-menu-today T11: for each range, whether `system_samples` has a row in `[start, end)`.
+    /// Returns the `start` of each range with one; nil on an SQLite error. Never turns history off.
+    public func daysWithSamples(_ ranges: [(start: Double, end: Double)]) -> Set<Double>? {
+        guard isOn, let db else { return nil }
+        var st: OpaquePointer?
+        guard sqlite3_prepare_v2(db, "SELECT 1 FROM system_samples WHERE t >= ? AND t < ? LIMIT 1", -1, &st, nil) == SQLITE_OK else {
+            return nil
+        }
+        defer { sqlite3_finalize(st) }
+        var out = Set<Double>()
+        for r in ranges {
+            sqlite3_reset(st)
+            sqlite3_bind_double(st, 1, r.start)
+            sqlite3_bind_double(st, 2, r.end)
+            switch sqlite3_step(st) {
+            case SQLITE_ROW: out.insert(r.start)
+            case SQLITE_DONE: break
+            default: return nil
+            }
+        }
+        return out
+    }
+
     /// rule id → (reason, at).
     public func pauses() -> [String: (reason: String, at: Double)] {
         var out: [String: (String, Double)] = [:]

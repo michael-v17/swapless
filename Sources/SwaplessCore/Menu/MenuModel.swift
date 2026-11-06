@@ -192,6 +192,8 @@ public enum MenuModel {
         }
         items += rulesSection(input)
         items.append(.separator("sep.rules"))
+        items.append(todayRow(st.activity))
+        items.append(.separator("sep.today"))
         items.append(MenuItem(slot: "footer", title: footer(st)))
         items.append(MenuItem(slot: "login", title: "Open at login", enabled: true,
                               checked: input.loginEnabled, action: .toggleLogin))
@@ -339,10 +341,70 @@ public enum MenuModel {
         return rows
     }
 
+    // MARK: the Today row (v1-menu-today S4)
+
+    static let weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    static let monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+    public static func todayRow(_ a: ActivityState) -> MenuItem {
+        switch a {
+        case .notRecorded(let reason):
+            return MenuItem(slot: "today", title: "Today: not recorded (\(reason))")
+        case .summary(let s):
+            var rows: [MenuItem] = []
+            for (i, d) in s.days.enumerated() {
+                rows.append(MenuItem(slot: "today.day.\(i)", title: "\(dayLabel(d, index: i)): \(dayBody(d))"))
+            }
+            rows.append(.separator("today.sep"))
+            rows.append(MenuItem(slot: "today.total", title: "7 days: \(activityBody(s.total))"))
+            let first = s.days.first.map { activityBody($0.counts) } ?? activityBody(ActivityCounts())
+            return MenuItem(slot: "today", title: "Today: \(first)", enabled: true, children: rows)
+        }
+    }
+
+    /// `Today`, `Yesterday`, then `Tue 3 Nov` from the day's own components (no DateFormatter,
+    /// so it is always in the summary's time zone).
+    static func dayLabel(_ d: DayActivity, index: Int) -> String {
+        switch index {
+        case 0: return "Today"
+        case 1: return "Yesterday"
+        default:
+            let wd = weekdayNames[max(0, min(6, d.weekday - 1))]
+            let mo = monthNames[max(0, min(11, d.month - 1))]
+            return "\(wd) \(d.day) \(mo)"
+        }
+    }
+
+    static func dayBody(_ d: DayActivity) -> String {
+        d.running ? activityBody(d.counts) : "not running"
+    }
+
+    /// `2 restarts (1 failed) · 2.8 GB freed`, or `no restarts`.
+    public static func activityBody(_ c: ActivityCounts) -> String {
+        let parts = ActivityKind.allCases.compactMap { k -> String? in
+            let n = c.count(k)
+            guard n > 0 else { return nil }
+            return "\(n) \(k.rawValue)\(n == 1 ? "" : "s")"
+        }
+        guard !parts.isEmpty else { return "no restarts" }
+        var s = parts.joined(separator: " · ")
+        if c.failed > 0 { s += " (\(c.failed) failed)" }
+        if let f = c.freedMB { s += " · \(freed(f)) freed" }
+        return s
+    }
+
+    /// Floored at 0: ≥ 1024 MB as `%.1f GB`, else whole MB.
+    static func freed(_ mbValue: Double) -> String {
+        let m = max(0, mbValue)
+        return m >= 1024 ? String(format: "%.1f GB", m / 1024) : "\(Int(m.rounded())) MB"
+    }
+
     public static func footer(_ st: EngineState) -> String {
         var s = "Swapless"
         if let r = st.selfReading {
-            s += String(format: " %.2f %% CPU · %d MB", r.cpuPercent, Int((Double(r.footprint) / mib).rounded()))
+            // The menu-closed 10-min average (owner call 1): the same quantity "over budget" uses.
+            let cpu = r.cpuPercentIdle.map { String(format: "%.2f", $0) } ?? "—"
+            s += " \(cpu) % CPU idle · \(Int((Double(r.footprint) / mib).rounded())) MB"
         }
         switch st.source {
         case .coalition: s += " · measuring: full"

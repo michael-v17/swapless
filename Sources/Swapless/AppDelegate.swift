@@ -36,7 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     fileprivate var showCounters = (held: 0, missed: 0, unexpected: 0)
     /// Group submenus opened per show, and how long each stays open.
     static let showSubmenus = 3
-    static let showSubmenuHold: TimeInterval = 2.5
+    static let showSubmenuHold: TimeInterval = 6
     static let showGap: TimeInterval = 2
     static let showOpenTimeout: TimeInterval = 5
     static let showClickAttempts = 3
@@ -54,12 +54,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Normal app mode prints nothing; the rig's menu-cycle mode prints its contract lines.
         let rig = config.rigMenuCycles != nil || config.rigMenuShows != nil || config.rigMenuDraws != nil
-        let types: Set<String> = rig ? ["start", "rules", "menuCycles", "menuShows", "menuDraws", "error"] : []
+            || config.rigMenuOpen != nil
+        let types: Set<String> = rig ? ["start", "rules", "menuCycles", "menuShows", "menuDraws", "menuOpen",
+                                        "menuOpenTail", "error"] : []
         sink = EventSink(jsonTypes: types)
         engine = Engine(config: config, sink: sink, labeler: Labeler(appNames: RunningAppNameProvider()),
                         signalSender: LiveSignalSender(sink: sink))
         menuController = MenuController(engine: engine, stateDir: config.stateDir)
-        if config.rigMenuCycles == nil && config.rigMenuDraws == nil {
+        if config.rigMenuCycles == nil && config.rigMenuDraws == nil && config.rigMenuOpen == nil {
             let si = StatusItemController(menu: menuController.menu)
             statusItem = si
             menuController.onDot = { [weak si] on in si?.setDot(on) }
@@ -74,6 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     self?.maybeStartCycles(st)
                     self?.maybeStartShows(st)
                     self?.maybeStartDraws(st)
+                    self?.maybeStartOpen(st)
                 }
             }
         }
@@ -81,7 +84,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// `SWAPLESS_RIG_MENU_DRAWS=N` (check 5's menu test): no status item. After the first sample
-    /// and a 30 s settle, act as if the menu were open (the engine's 2 s display sweeps run) and
+    /// and a 30 s settle, act as if the menu were open (the engine's 5 s display sweeps run) and
     /// draw the real menu N times, 2 s apart, into a window that is never ordered on screen
     /// (`MenuController.drawOffscreen`); then close it, print one `menuDraws` line, and keep
     /// running for the rig's idle measurement. Nothing is shown on screen.
@@ -105,6 +108,67 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     static let drawSettle: TimeInterval = 30
+
+    // MARK: - SWAPLESS_RIG_MENU_OPEN (check 5's offscreen menu-open test)
+
+    /// Off the 30 s base-tick grid.
+    static let openSettle: TimeInterval = 32.5
+    static let openTail: TimeInterval = 120
+    private var openStarted = false
+
+    /// Own CPU (user + system + reaped children), in mach ticks × timebase.
+    static func ownCpuSeconds() -> Double {
+        var ru = sw_rusage_t()
+        _ = sw_pid_rusage(getpid(), &ru)
+        var n: UInt32 = 1, d: UInt32 = 1
+        sw_timebase(&n, &d)
+        return SelfMeter.ticksToSeconds(ru.user_time &+ ru.system_time &+ ru.child_user_time &+ ru.child_system_time,
+                                        numer: n == 0 ? 1 : n, denom: d == 0 ? 1 : d)
+    }
+
+    /// No status item, menus never shown. After the first sample and a settle, simulate the menu
+    /// open for S seconds with three group submenus opened in turn, then print `menuOpen`;
+    /// 120 s later print `menuOpenTail`. Keeps running until `--duration`.
+    private func maybeStartOpen(_ st: EngineState) {
+        guard let seconds = config.rigMenuOpen, !openStarted, st.snapshot != nil else { return }
+        openStarted = true
+        menuController.actionsDisabled = true
+        after(Self.openSettle) { [weak self] in
+            guard let self else { return }
+            let engine = self.engine!
+            let cpu0 = Self.ownCpuSeconds()
+            let c0 = engine.sync { (engine.displaySweeps, engine.publishes) }
+            let r0 = self.menuController.refreshCount
+            let b0 = self.menuController.compressedReadBatches
+            self.menuController.simulateOpen(seconds: Double(seconds)) { [weak self] opened in
+                guard let self else { return }
+                let cpu1 = Self.ownCpuSeconds()
+                let c1 = engine.sync { (engine.displaySweeps, engine.publishes) }
+                let d = cpu1 - cpu0
+                self.sink.emit("menuOpen", .object([
+                    ("type", .string("menuOpen")),
+                    ("seconds", .i(seconds)),
+                    ("refreshes", .i(self.menuController.refreshCount - r0)),
+                    ("displaySweeps", .i(c1.0 - c0.0)),
+                    ("publishes", .i(c1.1 - c0.1)),
+                    ("compressedReadBatches", .i(self.menuController.compressedReadBatches - b0)),
+                    ("submenusOpened", .i(opened)),
+                    ("cpuSecondsOpen", .double(d)),
+                    ("cpuPercentOpen", .double(d / Double(seconds) * 100)),
+                    ("windows", .i(NSApp.windows.count)),
+                ]))
+                self.after(Self.openTail) { [weak self] in
+                    let dt = Self.ownCpuSeconds() - cpu1
+                    self?.sink.emit("menuOpenTail", .object([
+                        ("type", .string("menuOpenTail")),
+                        ("seconds", .i(Int(Self.openTail))),
+                        ("cpuSeconds", .double(dt)),
+                        ("cpuPercent", .double(dt / Self.openTail * 100)),
+                    ]))
+                }
+            }
+        }
+    }
 
     private func drawStep() {
         guard let n = config.rigMenuDraws else { return }
@@ -247,7 +311,7 @@ extension AppDelegate {
 
     /// While the menu is open, walk it like a person would: a down arrow highlights the next
     /// group, which closes the previous group's submenu and makes AppKit open this one; hold it
-    /// through the 2 s refresh; then close the menu. Arrow keys go to this app's own event
+    /// through a 5 s refresh; then close the menu. Arrow keys go to this app's own event
     /// queue (no Accessibility). Focus stays on the top level (a left arrow there closes a
     /// status-item menu), and each step waits for the submenu to open (AppKit sometimes handles
     /// posted keys late). A submenu that closes during its hold is unexpected.
@@ -281,7 +345,7 @@ extension AppDelegate {
         }
     }
 
-    private func after(_ delay: TimeInterval, _ body: @escaping @MainActor () -> Void) {
+    fileprivate func after(_ delay: TimeInterval, _ body: @escaping @MainActor () -> Void) {
         let t = Timer(timeInterval: delay, repeats: false) { _ in MainActor.assumeIsolated { body() } }
         RunLoop.main.add(t, forMode: .common)
     }
