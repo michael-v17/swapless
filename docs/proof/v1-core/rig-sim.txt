@@ -1,0 +1,9 @@
+swapless-rig · mode sim · checks 6 · 2026-11-05 20:08:28 +0000
+debug-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Debug · release-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Release
+preflight: PASS free 41 % · wallpaper baseline [97767@1793894264.673659, 97770@1793894265.019187]
+  check 6: booting iPhone 18 Pro (497AA5A8-08F0-43F5-91B4-4757FF3AA660); it will be shut down afterwards
+  check 6: booted at 1793909344.329 (bootstatus exit 0)
+  check 6: fixture sim-booted.json written (exit 0)
+  check 6: iPhone 18 Pro shut down; confirmed not booted
+check 6 simulator: PASS Simulator · iPhone 18 Pro footprint 7490.4 MB, 192 members (launchd_sim pid 49897)
+rig: PASS · 0 failed · 0 skipped · report ~/Desktop/Projects/Personal/Swapless/.build/rig/rig-20261105-140828-sim.txt

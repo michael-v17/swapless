@@ -1,0 +1,38 @@
+swapless-rig · mode budget · checks 1,2,3,4,5 · 2026-11-05 23:35:59 +0000
+debug-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Debug · release-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Release
+preflight: PASS free 71 % · wallpaper baseline [41902@1793916807.928220, 41904@1793916808.245520]
+  check 1 [coalition-mode] source=coalition selfCheck=pass checked=10 passed=10 windowServer=pass
+  check 1 [coalition-mode] T0=1793921760.222 T1=1793921760.541 before.t=1793921760.096 after.t=1793921762.295
+  check 1 [coalition-mode] helper top=258.0 MB engine=257.7 MB/257.7 MB ok
+  check 1 [coalition-mode] helper footprint(1)=257.7 MB vs after 257.7 MB Δ=0.0 MB
+  check 1 [coalition-mode] WallpaperImageExtension top=579.0 MB engine=579.1 MB/579.1 MB ok
+  check 1 [coalition-mode] WindowServer group (2 members) Σtop=1173.0 MB engine=1173.4 MB/1173.4 MB tol=13.7 MB ok
+  check 1 [coalition-mode] broad 35/35 same-user ≥ 50 MB within tol (100.0 %)
+  check 1 [coalition-mode] coverage: top 788 pids, sample 787 members, 0 gone/new, 0 missing
+  check 1 [top-mode] T0=1793921763.121 T1=1793921763.450 before.t=1793921763.049 after.t=1793921765.232
+  check 1 [top-mode] helper top=258.0 MB engine=257.7 MB/257.7 MB ok
+  check 1 [top-mode] helper footprint(1)=257.7 MB vs after 257.7 MB Δ=0.0 MB
+  check 1 [top-mode] WallpaperImageExtension top=579.0 MB engine=579.1 MB/579.1 MB ok
+  check 1 [top-mode] WindowServer group (2 members) Σtop=1173.0 MB engine=1173.0 MB/1173.0 MB tol=13.7 MB ok
+  check 1 [top-mode] broad 35/35 same-user ≥ 50 MB within tol (100.0 %)
+  check 1 [top-mode] coverage: top 788 pids, sample 787 members, 0 gone/new, 0 missing
+check 1 footprint-matches-top: PASS both runs matched top
+  check 2: grower flagged 3.6 s after crossing 200 MB, slope 28819 MB/h (reason slope)
+  check 2: flat flags 0 · sawtooth flags 0 · all flags 1
+check 2 growth-flagged: PASS grower flagged 3.6 s after crossing 200 MB, slope 28819 MB/h (reason slope) · flat flags 0 · sawtooth flags 0 · all flags 1
+  check 3: check-2 run: 0 actions, markers [], helpers not exiting on their own []; wallpaper identities unchanged
+  check 3: (a) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (b) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (c) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (d) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (e) release · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+check 3 no-action-without-rule: PASS no action without a rule in 6 runs
+  check 4: 1 action(s), 1 outcome(s); A exit 143, B exit 0
+  check 4: a.marker 0.00 s after the action
+  check 4: decision cooldown after B's second sample above 200 MB
+  check 4: wallpaper dry run: 1 action(s), dryRun=1, outcome=dry-run, pids [41902, 41904] vs restart set [41902, 41904], 0 outcome line(s), identities unchanged 5 s later
+check 4 ruled-action-once: PASS 1 action(s), 1 outcome(s); A exit 143, B exit 0 · a.marker 0.00 s after the action · decision cooldown after B's second sample above 200 MB · wallpaper dry run: 1 action(s), dryRun=1, outcome=dry-run, pids [41902, 41904] vs restart set [41902, 41904], 0 outcome line(s), identities unchanged 5 s later
+  check 5: peak test: 20 menu cycles, ri_lifetime_max_phys_footprint 12.8 MB, exit 0
+  check 5: menu test: 10 shows (30 submenus, 0 extra clicks), then 60 s closed: footprint(1) 34.4 MB, peak 37.5 MB
+check 5 budget: FAIL installed app is stale: run ./scripts/make-app.sh release --adhoc (differs from ./Swapless.app); menu test: 10 shows (30 submenus, 0 extra clicks), then 60 s closed: footprint(1) 34.4 MB, peak 37.5 MB; footprint 34.4 MB > 30 MB
+rig: FAIL · 1 failed · 0 skipped · report ~/Desktop/Projects/Personal/Swapless/.build/rig/rig-20261105-173559-budget.txt

@@ -1,0 +1,16 @@
+swapless-rig · mode live-wallpaper · checks 7 · 2026-11-05 20:29:22 +0000
+debug-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Debug · release-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Release
+preflight: PASS free 57 % · wallpaper baseline [97767@1793894264.673659, 97770@1793894265.019187]
+  check 7: Portal pid 1932, extension C = 1956.6 MB → rule footprintAboveMB 1856; release engine, not a dry run
+  check 7: action pids (
+    97770,
+    97767
+) beforeMB 1956.6 → outcome ok afterMB 138.0 · WindowServer 1663.1 → 948.6 MB · agent back 0.6 s, extension back 0.6 s
+  check 7: Portal pid 1932 unchanged and running
+  check 7: wallpaper identities before [97767, 97770] after [70394, 70396]
+  check 7: log saved to docs/proof/v1-core/check7-log.txt
+check 7 live-wallpaper: PASS action pids (
+    97770,
+    97767
+) beforeMB 1956.6 → outcome ok afterMB 138.0 · WindowServer 1663.1 → 948.6 MB · agent back 0.6 s, extension back 0.6 s
+rig: PASS · 0 failed · 0 skipped · report ~/Desktop/Projects/Personal/Swapless/.build/rig/rig-20261105-142922-live-wallpaper.txt

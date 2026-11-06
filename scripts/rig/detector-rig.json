@@ -1,0 +1,17 @@
+{
+  "bucketSeconds": 2,
+  "trackFloorMB": 16,
+  "baselineShortSeconds": 6,
+  "baselineLongSeconds": 3600,
+  "baselineLookbackSeconds": 3600,
+  "floorMB": 200,
+  "baselineMultiplier": 1,
+  "slopeWindowSeconds": 20,
+  "minBucketsInWindow": 6,
+  "minSlopeMBPerHour": 3600,
+  "risingFraction": 0.7,
+  "confirmations": 2,
+  "unflagSlopeMBPerHour": 1800,
+  "fastPathFractionOfRAM": 0.10,
+  "fastPathWindowSeconds": 10
+}

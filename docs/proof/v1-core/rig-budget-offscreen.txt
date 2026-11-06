@@ -1,0 +1,43 @@
+swapless-rig · mode budget · checks 1,2,3,4,5 · 2026-11-06 02:51:46 +0000
+debug-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Debug · release-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Release
+preflight: PASS free 54 % · wallpaper baseline [41902@1793916807.928220, 41904@1793916808.245520]
+  check 1 [coalition-mode] source=coalition selfCheck=pass checked=10 passed=10 windowServer=pass
+  check 1 [coalition-mode] T0=1793933506.519 T1=1793933507.278 before.t=1793933506.389 after.t=1793933508.588
+  check 1 [coalition-mode] helper top=258.0 MiB engine=257.7 MiB/257.7 MiB ok
+  check 1 [coalition-mode] helper footprint(1)=257.7 MiB vs after 257.7 MiB Δ=0.0 MiB
+  check 1 [coalition-mode] WallpaperImageExtension top=516.0 MiB engine=516.2 MiB/516.2 MiB ok
+  check 1 [coalition-mode] WindowServer group (2 members) Σtop=1288.0 MiB engine=1287.3 MiB/1287.3 MiB tol=14.9 MiB ok
+  check 1 [coalition-mode] broad 67/67 same-user ≥ 50 MB within tol (100.0 %)
+  check 1 [coalition-mode] coverage: top 803 pids, sample 802 members, 0 gone/new, 0 missing
+  check 1 [top-mode] T0=1793933509.970 T1=1793933510.722 before.t=1793933509.890 after.t=1793933512.090
+  check 1 [top-mode] helper top=258.0 MiB engine=257.8 MiB/257.8 MiB ok
+  check 1 [top-mode] helper footprint(1)=257.8 MiB vs after 257.8 MiB Δ=0.0 MiB
+  check 1 [top-mode] WallpaperImageExtension top=516.0 MiB engine=516.2 MiB/516.2 MiB ok
+  check 1 [top-mode] WindowServer group (2 members) Σtop=1288.0 MiB engine=1288.0 MiB/1288.0 MiB tol=14.9 MiB ok
+  check 1 [top-mode] broad 67/67 same-user ≥ 50 MB within tol (100.0 %)
+  check 1 [top-mode] coverage: top 803 pids, sample 801 members, 1 gone/new, 0 missing
+check 1 footprint-matches-top: PASS both runs matched top
+  check 2: grower flagged 4.6 s after crossing 200 MB, slope 28821 MB/h (reason slope)
+  check 2: flat flags 0 · sawtooth flags 0 · all flags 2
+check 2 growth-flagged: PASS grower flagged 4.6 s after crossing 200 MB, slope 28821 MB/h (reason slope) · flat flags 0 · sawtooth flags 0 · all flags 2
+  check 3: check-2 run: 0 actions, markers [], helpers not exiting on their own []; wallpaper identities unchanged
+  check 3: (a) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (b) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (c) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (d) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (e) release · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+check 3 no-action-without-rule: PASS no action without a rule in 6 runs
+  check 4: 1 action(s), 1 outcome(s); A exit 143, B exit 0
+  check 4: a.marker 0.00 s after the action
+  check 4: decision cooldown after B's second sample above 200 MB
+  check 4: wallpaper dry run: 1 action(s), dryRun=1, outcome=dry-run, pids [41902, 41904] vs restart set [41902, 41904], 0 outcome line(s), identities unchanged 5 s later
+check 4 ruled-action-once: PASS 1 action(s), 1 outcome(s); A exit 143, B exit 0 · a.marker 0.00 s after the action · decision cooldown after B's second sample above 200 MB · wallpaper dry run: 1 action(s), dryRun=1, outcome=dry-run, pids [41902, 41904] vs restart set [41902, 41904], 0 outcome line(s), identities unchanged 5 s later
+  check 5: installed Swapless pid 52010; CPU budget 0.2 % (coalition mode)
+  check 5: self line 1: cpuSeconds 0.835 (ps 0.84) footprint 19.4 MiB (footprint(1) 19.4 MiB) menuOpenSeconds 0.0
+  check 5: self line 2: cpuSeconds 1.150 (ps 1.15) footprint 19.9 MiB (footprint(1) 19.9 MiB) menuOpenSeconds 0.0
+  check 5: self line 3: cpuSeconds 1.469 (ps 1.47) footprint 20.0 MiB (footprint(1) 20.0 MiB) menuOpenSeconds 0.0
+  check 5: window 600 s · CPU 0.105 % (Δps 0.63 s) · top MEM 20.0 MiB (limit 30 MiB, menu never shown) · peak 20.2 MiB
+  check 5: peak test: 20 menu cycles, ri_lifetime_max_phys_footprint 13.1 MiB, exit 0
+  check 5: menu draw test (offscreen: no status item, window never ordered on screen): 50 draws, 5676 rows drawn, 0 visible; footprint before 10.8 MiB, 60 s after 13.8 MiB (for the record: offscreen doesn't reproduce the on-screen cost), peak 16.2 MiB (limit 45 MiB)
+check 5 budget: PASS window 600 s · CPU 0.105 % (Δps 0.63 s) · top MEM 20.0 MiB (limit 30 MiB, menu never shown) · peak 20.2 MiB · peak test: 20 menu cycles, ri_lifetime_max_phys_footprint 13.1 MiB, exit 0 · menu draw test (offscreen: no status item, window never ordered on screen): 50 draws, 5676 rows drawn, 0 visible; footprint before 10.8 MiB, 60 s after 13.8 MiB (for the record: offscreen doesn't reproduce the on-screen cost), peak 16.2 MiB (limit 45 MiB)
+rig: PASS · 0 failed · 0 skipped · report ~/Desktop/Projects/Personal/Swapless/.build/rig/rig-20261105-205146-budget.txt

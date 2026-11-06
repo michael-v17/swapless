@@ -1,0 +1,6 @@
+Timestamp                       Thread     Type        Activity             PID    TTL  
+2026-11-05 14:32:35.197205-0600 0xb65f17   Default     0x0                  73940  0    Swapless: [com.michaelv.swapless:rules] seeded rules.json with wallpaper-leak-guard (owner decision 2026-11-05) in ~/Library/Application Support/Swapless
+2026-11-05 14:32:35.228745-0600 0xb65f17   Default     0x0                  73940  0    Swapless: [com.michaelv.swapless:sampler] self-check coalition=pass checked=10 passed=10 windowServer=pass responsibility=pass source=coalition
+2026-11-05 14:32:35.229006-0600 0xb65f17   Default     0x0                  73940  0    Swapless: [com.michaelv.swapless:rules] rules status=ok · rule id=wallpaper-leak-guard valid=true enabled=true error=null
+2026-11-05 14:32:35.251315-0600 0xb65f17   Default     0x0                  73940  0    Swapless: [com.michaelv.swapless:rules] decision rule=wallpaper-leak-guard reason=below-threshold
+2026-11-05 14:32:35.251403-0600 0xb65f17   Default     0x0                  73940  0    Swapless: [com.michaelv.swapless:self] self cpuSeconds=0.140 childCpuSeconds=0.000 cpuPct10m=0.000 footprint=14304144 peak=14304144 menuOpenSeconds=0.0

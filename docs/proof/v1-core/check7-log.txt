@@ -1,0 +1,13 @@
+Timestamp                       Thread     Type        Activity             PID    TTL  
+2026-11-05 14:29:23.141607-0600 0xb622b6   Default     0x0                  70391  0    Swapless: [com.michaelv.swapless:sampler] self-check coalition=pass checked=10 passed=10 windowServer=pass responsibility=pass source=coalition
+2026-11-05 14:29:23.142571-0600 0xb622b6   Default     0x0                  70391  0    Swapless: [com.michaelv.swapless:rules] rules status=ok · rule id=wallpaper-live-check valid=true enabled=true error=null
+2026-11-05 14:29:23.184075-0600 0xb622b6   Default     0x0                  70391  0    Swapless: [com.michaelv.swapless:rules] decision rule=wallpaper-live-check reason=consecutive-pending
+2026-11-05 14:29:23.184170-0600 0xb622b6   Default     0x0                  70391  0    Swapless: [com.michaelv.swapless:self] self cpuSeconds=0.053 childCpuSeconds=0.000 cpuPct10m=0.000 footprint=5931464 peak=5931464 menuOpenSeconds=0.0
+2026-11-05 14:29:25.371139-0600 0xb622b6   Default     0x0                  70391  0    Swapless: [com.michaelv.swapless:actions] action id=1 rule=wallpaper-live-check target=wallpaper pids=[97770, 97767] beforeMB=1956.6 dryRun=false outcome=pending
+2026-11-05 14:29:25.386377-0600 0xb622b6   Default     0x0                  70391  0    Swapless: [com.michaelv.swapless:actions] sigterm pid=97770 target=wallpaper result=sent
+2026-11-05 14:29:25.386493-0600 0xb622b6   Default     0x0                  70391  0    Swapless: [com.michaelv.swapless:actions] sigterm pid=97767 target=wallpaper result=sent
+2026-11-05 14:29:27.348514-0600 0xb622b6   Default     0x0                  70391  0    Swapless: [com.michaelv.swapless:rules] decision rule=wallpaper-live-check reason=below-threshold
+2026-11-05 14:29:43.365248-0600 0xb622b8   Default     0x0                  70391  0    Swapless: [com.michaelv.swapless:self] self cpuSeconds=0.318 childCpuSeconds=0.000 cpuPct10m=1.312 footprint=7389664 peak=8782304 menuOpenSeconds=0.0
+2026-11-05 14:30:03.371584-0600 0xb622b8   Default     0x0                  70391  0    Swapless: [com.michaelv.swapless:self] self cpuSeconds=0.606 childCpuSeconds=0.000 cpuPct10m=1.376 footprint=7094752 peak=8782304 menuOpenSeconds=0.0
+2026-11-05 14:30:23.363916-0600 0xb622b6   Default     0x0                  70391  0    Swapless: [com.michaelv.swapless:self] self cpuSeconds=0.896 childCpuSeconds=0.000 cpuPct10m=1.401 footprint=7029216 peak=8782304 menuOpenSeconds=0.0
+2026-11-05 14:30:27.488693-0600 0xb622b6   Default     0x0                  70391  0    Swapless: [com.michaelv.swapless:actions] actionOutcome id=1 rule=wallpaper-live-check outcome=ok afterMB=138.0 wsBeforeMB=1663.1 wsAfterMB=948.6

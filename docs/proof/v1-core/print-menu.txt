@@ -1,0 +1,105 @@
+Free 73 % · Pressure normal
+Compressed 1.3 GB · Swap 3.4 GB · Swap-in —
+────────
+Safari: 1.83 GB
+    Web Content (pid 43898): 459 MB
+    Web Content (pid 49056): 455 MB
+    Safari: 253 MB
+    Web Content (pid 48921): 245 MB
+    Web Content (pid 79152): 180 MB
+    com.apple.WebKit.Networking: 72 MB
+    com.apple.WebKit.GPU: 61 MB
+    com.apple.appkit.xpc.openAndSavePanelService: 33 MB
+    com.apple.AuthenticationServices.Helper: 27 MB
+    MTLCompilerService: 23 MB
+    MTLCompilerService: 15 MB
+    LocalAuthenticationRemoteService: 12 MB
+    Web Content (pid 70188): 9 MB
+    com.apple.Safari.SandboxBroker: 7 MB
+    QuickLookUIService: 7 MB
+    + 5 smaller processes: 16 MB
+Google Chrome: 969 MB
+    Google Chrome Helper (Aperitif Renderer): 302 MB
+    Google Chrome: 202 MB
+    Google Chrome Helper (Aperitif Renderer): 100 MB
+    Google Chrome Helper (Aperitif Renderer): 67 MB
+    Google Chrome Helper (Aperitif): 45 MB
+    Google Chrome Helper (Aperitif Renderer): 41 MB
+    Google Chrome Helper (Aperitif Renderer): 38 MB
+    Google Chrome Helper (Aperitif Renderer): 32 MB
+    Google Chrome Helper (Aperitif Renderer): 30 MB
+    Google Chrome Helper (Aperitif Renderer): 28 MB
+    Google Chrome Helper (Aperitif Renderer): 25 MB
+    Google Chrome Helper (Aperitif): 17 MB
+    Google Chrome Helper (Aperitif Renderer): 16 MB
+    Google Chrome Helper (Aperitif Renderer): 14 MB
+    Google Chrome Helper (Aperitif): 7 MB
+    + 2 smaller processes: 5 MB
+Portal: 948 MB
+    Portal: 709 MB
+    VTDecoderXPCService: 229 MB
+    Portal Desktop Helper: 7 MB
+    SetStoreUpdateService: 3 MB
+WindowServer · system: 944 MB
+    + 2 system processes: 944 MB
+        WindowServer
+        MTLCompilerService
+Warp: 724 MB
+    stable: 618 MB
+    com.apple.SafariPlatformSupport.Helper: 17 MB
+    SourceKitService: 13 MB
+    stable: 9 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    + 3 smaller processes: 11 MB
+Claude Code · project-a: 530 MB
+    2.1.318: 360 MB
+    node: 53 MB
+    node: 44 MB
+    node: 38 MB
+    node: 35 MB
+Claude Code · project-a: 506 MB
+    2.1.317: 340 MB
+    node: 53 MB
+    node: 43 MB
+    node: 36 MB
+    node: 35 MB
+Claude Code · project-b: 497 MB
+    2.1.318: 223 MB
+    node: 66 MB
+    node: 53 MB
+    node: 42 MB
+    node: 42 MB
+    node: 35 MB
+    node: 35 MB
+Claude Code · Swapless: 496 MB
+    2.1.318: 401 MB
+    node: 36 MB
+    node: 35 MB
+    sourcekit-lsp: 17 MB
+    Swapless: 4 MB
+    zsh: 3 MB
+    caffeinate: 2 MB
+Claude Code · project-a: 487 MB
+    2.1.318: 316 MB
+    node: 53 MB
+    node: 44 MB
+    node: 39 MB
+    node: 35 MB
+Everything else: 8.67 GB in 550 groups
+────────
+✓ Wallpaper guard: restarts above 1 GB
+Watching: WallpaperImageExtension 138 MB
+────────
+Swapless 0.00 % CPU · 4 MB · measuring: full
+Open at login
+Quit Swapless  ⌘Q

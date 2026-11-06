@@ -1,0 +1,17 @@
+swapless-rig · mode only-3,4 · checks 3,4 · 2026-11-05 20:22:43 +0000
+debug-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Debug · release-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Release
+preflight: PASS free 59 % · wallpaper baseline [97767@1793894264.673659, 97770@1793894265.019187]
+  check 3: running check 2's scenario first (its pass criteria are not evaluated)
+  check 3: check-2 run: 0 actions, markers [], helpers not exiting on their own []; wallpaper identities unchanged
+  check 3: (a) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (b) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (c) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (d) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (e) release · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+check 3 no-action-without-rule: PASS no action without a rule in 6 runs
+  check 4: 1 action(s), 1 outcome(s); A exit 143, B exit 0
+  check 4: a.marker 0.00 s after the action
+  check 4: decision cooldown after B's second sample above 200 MB
+  check 4: wallpaper dry run: 1 action(s), dryRun=1, outcome=dry-run, pids [97767, 97770] vs restart set [97767, 97770], 0 outcome line(s), identities unchanged 5 s later
+check 4 ruled-action-once: PASS 1 action(s), 1 outcome(s); A exit 143, B exit 0 · a.marker 0.00 s after the action · decision cooldown after B's second sample above 200 MB · wallpaper dry run: 1 action(s), dryRun=1, outcome=dry-run, pids [97767, 97770] vs restart set [97767, 97770], 0 outcome line(s), identities unchanged 5 s later
+rig: PASS · 0 failed · 0 skipped · report ~/Desktop/Projects/Personal/Swapless/.build/rig/rig-20261105-142243-only-3-4.txt
