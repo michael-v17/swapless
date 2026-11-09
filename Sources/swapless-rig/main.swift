@@ -2,19 +2,23 @@
 //
 //   bare run            preflight + checks 1–4
 //   --only N[,N…]       preflight + just those checks (1–4 only)
-//   --budget            preflight + checks 1–5
+//   --budget            preflight + checks 1–5 (5 includes 5c)
+//   --quit-on-close     preflight + check 9: launches the rig's off-screen test apps, which
+//                       Mission Control can still show. Only in an announced session with
+//                       the owner present (owner, 2026-11-06); never in the done-gate.
 //   --sim               preflight + check 6
 //   --live-wallpaper    preflight + check 7
 //   --on-screen-menu    preflight + the on-screen menu walk: it opens the real menu on the
 //                       owner's screen. Only in an announced session the owner approved
-//                       (DECISIONS.md 2026-11-05); never part of the done-gate.
+//                       (DECISIONS.md 2026-11-05); never part of the done-gate. It is
+//                       numbered 8 internally; check 9 (quit on last window close) is not it.
 //
 // Exit code 0 iff there is no FAIL.
 import Darwin
 import Foundation
 import SwaplessCore
 
-let usage = "usage: check 5 runs via --budget, 6 via --sim, 7 via --live-wallpaper; --on-screen-menu only in an announced session the owner approved"
+let usage = "usage: --only takes 1–4; check 5 runs via --budget, 6 via --sim, 7 via --live-wallpaper; --quit-on-close (check 9) and --on-screen-menu only in an announced session the owner approved"
 
 struct RigArgs {
     var debugBin = ""
@@ -63,6 +67,9 @@ func parseRigArgs() -> RigArgs {
         case "--live-wallpaper":
             a.checks = [7]
             modes.append("live-wallpaper")
+        case "--quit-on-close":
+            a.checks = [9]
+            modes.append("quit-on-close")
         case "--on-screen-menu":
             a.checks = [8]
             modes.append("on-screen-menu")
@@ -166,6 +173,10 @@ if ok {
         case 7:
             name = "check 7 live-wallpaper"
             outcome = Check7.run(rig)
+        case 9:
+            report.line("rig: check 9 launches off-screen test apps for ~4 min; Mission Control would show them (announced session only)")
+            name = "check 9 quit-on-last-window-close"
+            outcome = Check9.run(rig)
         case 8:
             name = "on-screen menu walk (announced session only)"
             report.line("rig: on-screen menu walk: the real Swapless menu opens \(Check5.menuShows) times on this screen, ~13 s each")

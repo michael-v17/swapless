@@ -3,7 +3,13 @@
 #
 #   ./scripts/leak-rig.sh                  preflight + checks 1–4
 #   ./scripts/leak-rig.sh --only 1[,2…]    preflight + just those checks (1–4 only)
-#   ./scripts/leak-rig.sh --budget         preflight + checks 1–5 (needs the installed app)
+#   ./scripts/leak-rig.sh --budget         preflight + checks 1–5, 5c included (needs the installed app)
+#   ./scripts/leak-rig.sh --quit-on-close  preflight + check 9 (quit on last window close, ~4 min). It
+#                                          launches the rig's off-screen LSUIElement test apps, which
+#                                          Mission Control can still show: only in an announced session
+#                                          with the owner present (owner, 2026-11-06), never in the
+#                                          done-gate. Needs the terminal's Accessibility grant; its
+#                                          engines can only quit those test apps.
 #   ./scripts/leak-rig.sh --sim            preflight + check 6 (boots and shuts down a simulator)
 #   ./scripts/leak-rig.sh --live-wallpaper preflight + check 7 (one real wallpaper restart)
 #   ./scripts/leak-rig.sh --on-screen-menu preflight + the on-screen menu walk. It opens the real

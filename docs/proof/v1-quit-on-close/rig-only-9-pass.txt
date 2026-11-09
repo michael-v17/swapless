@@ -1,0 +1,24 @@
+swapless-rig · mode only-9 · checks 9 · 2026-11-06 18:23:49 +0000
+debug-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Debug · release-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Release
+preflight: PASS free 53 % · wallpaper baseline [33605@1793968875.101779, 33607@1793968875.395420]
+  check 9: walls ok (no force quit anywhere; one .terminate() in QuitSender.swift)
+  check 9: engines up, trusted and available (live tracks 12 apps, read-only)
+  check 9: visibility gate ok (13 apps, every window off every display, on visible Space [6, 1379, 1382])
+  check 9 · close-ax: PASS quit 5.71 s after the close, outcome ok, before_mb 84.1 (footprint 81.6)
+  check 9 · close-menu: PASS quit 5.79 s after the close, outcome ok, before_mb 84.1 (footprint 81.6)
+  check 9 · hide-on-close: PASS quit 5.74 s after the close, outcome ok, before_mb 84.0 (footprint 81.5)
+  check 9 · helpers: PASS quit 5.80 s after the close, outcome ok, before_mb 96.0 (footprint 93.5)
+  check 9 · two-windows: PASS quit 5.66 s after the close, outcome ok, before_mb 85.1 (footprint 82.5)
+  check 9 · swap: PASS no quit; decisions ["cancelled-window"]
+  check 9 · tabs: PASS quit 5.59 s after the close, outcome ok, before_mb 90.7 (footprint 88.0)
+  check 9 · refuse: PASS refused at 30 s, left alone 15 s, re-armed by a new window (2 terminates)
+  check 9 · never-quit: PASS no quit; decisions ["never-quit"]
+  check 9 · young: PASS no quit; decisions ["young"]
+  check 9 · windowless: PASS no quit; decisions []
+  check 9 · option-off: PASS no quit; decisions []
+  check 9 · dry-run: PASS no terminate, a dry-run row, Today quits 0
+  check 9: activity today quits 6 (ok quits 6), freedMB 524.0 (sum before_mb 524.0)
+  check 9: cpuMs over 26 decisions: p50 3.0 · p95 15.4 · max 15.6 (limit 150)
+  check 9: relaunch reads today quits 6
+check 9 quit-on-last-window-close: PASS 13 of 13 scenarios pass, 6 ok quits
+rig: PASS · 0 failed · 0 skipped · report ~/Desktop/Projects/Personal/Swapless/.build/rig/rig-20261106-122349-only-9.txt

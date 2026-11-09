@@ -12,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     fileprivate var menuController: MenuController!
     fileprivate var statusItem: StatusItemController?
     private var wake: WakeObserver?
+    private var watcher: WindowWatcher?
     private var cyclesStarted = false
     private var cyclesDone = 0
     private var cyclesTimer: Timer?
@@ -68,6 +69,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         let engineRef = engine!
         wake = WakeObserver { engineRef.wake() }
+        let w = WindowWatcher(engine: engine, sink: sink, dryRun: config.dryRun)
+        watcher = w
+        menuController.onMenuOpen = { [weak w] in w?.recheck() }
+        w.start()
         let controller = menuController!
         engine.onState = { [weak self] st in
             DispatchQueue.main.async {

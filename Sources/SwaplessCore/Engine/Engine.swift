@@ -23,6 +23,8 @@ public struct EngineState: Sendable {
     public var dotGeneration: Int
     /// The Today row (v1-menu-today S3).
     public var activity: ActivityState = .notRecorded(reason: "history off")
+    /// Quit on last window close (v1-quit-on-close S3).
+    public var quit = QuitDisplay()
 
     public init() {
         flags = []
@@ -106,6 +108,18 @@ public final class Engine: @unchecked Sendable {
     private var lastGroups: [ProcessGroup] = []
     private var draining = false
 
+    // v1-quit-on-close S3: the watcher's status, quit rows still waiting for their outcome, and
+    // the names the watcher saw at quit time.
+    private var watcherStatus: WatcherStatus?
+    private var openQuits: Set<Int64> = []
+    private var quitNames: [Int64: String] = [:]
+    private var lastQuitView: QuitEngineView?
+    /// App names by bundle id for the `Last quit` row. Set before `start()`.
+    public var appNameProvider: AppNameByBundleId?
+    /// Called on the engine queue whenever the facts the watcher needs change. Set before
+    /// `start()`.
+    public var onQuitView: (@Sendable (QuitEngineView) -> Void)?
+
     /// Called on the engine queue after every sweep.
     public var onState: (@Sendable (EngineState) -> Void)?
 
@@ -118,6 +132,12 @@ public final class Engine: @unchecked Sendable {
 
     private func sendState() {
         publishes += 1
+        state.quit = quitDisplay(now: Clock.wall())
+        let view = quitView()
+        if view != lastQuitView {
+            lastQuitView = view
+            onQuitView?(view)
+        }
         onState?(state)
     }
 
@@ -354,6 +374,11 @@ public final class Engine: @unchecked Sendable {
             ("observeOnly", .bool(state.observeOnly)),
             ("source", .string(source.kind.rawValue)),
             ("selfCheck", sc.json),
+            ("quit", .object([
+                ("enabled", .bool(RulesFile.load(url: RulesFile.url(in: config.stateDir),
+                                                 allowedTargets: config.allowedTargets).quit.isActive)),
+                ("rigPrefix", .opt(config.rigQuitBundlePrefix)),
+            ])),
         ]))
     }
 
@@ -642,7 +667,7 @@ public final class Engine: @unchecked Sendable {
         state.ruleDisplays = lastSnapshot.map(ruleDisplays) ?? state.ruleDisplays
         recomputeActivity()
         sendState()
-        if draining && verifies.isEmpty { reallyFinish(exitCode: pendingExitCode) }
+        if draining && verifies.isEmpty && openQuits.isEmpty { reallyFinish(exitCode: pendingExitCode) }
     }
 
     /// WindowServer's coalition footprint in a snapshot (its group's total).
@@ -688,6 +713,42 @@ public final class Engine: @unchecked Sendable {
             case .written: sink.log(.rules, "rule \(ruleId) enabled=\(enabled) written")
             case .skippedChanged: sink.log(.rules, "rules.json changed on disk; write skipped")
             case .notAllowed: sink.log(.rules, "rules.json has invalid rules; toggle not written")
+            case .failed(let e): sink.error(where: "rules", "write failed: \(e)", category: .rules)
+            }
+            reloadRules(force: true)
+            republish()
+        }
+    }
+
+    /// v1-quit-on-close S5: the menu's quit toggle and the Never-quit list, written like the
+    /// wallpaper toggle (whole file valid, unchanged on disk since the load, atomic v2 write).
+    public func setQuitEnabled(_ enabled: Bool) {
+        writeQuit("quit-on-last-window enabled=\(enabled)") { url, load in
+            RulesFile.writeQuitEnabled(url: url, load: load, enabled: enabled)
+        }
+    }
+
+    public func addNeverQuit(bundleId: String, name: String) {
+        writeQuit("never quit + \(bundleId)") { url, load in
+            RulesFile.addNeverQuit(url: url, load: load, bundleId: bundleId, name: name, now: Clock.wall(),
+                                   timeZone: .autoupdatingCurrent)
+        }
+    }
+
+    public func removeNeverQuit(bundleId: String) {
+        writeQuit("never quit − \(bundleId)") { url, load in
+            RulesFile.removeNeverQuit(url: url, load: load, bundleId: bundleId)
+        }
+    }
+
+    private func writeQuit(_ what: String, _ write: @escaping (URL, RulesLoad) -> WriteResult) {
+        queue.async { [self] in
+            guard !observeOnly else { return }
+            let url = RulesFile.url(in: config.stateDir)
+            switch write(url, rules) {
+            case .written: sink.log(.rules, "\(what) written")
+            case .skippedChanged: sink.log(.rules, "rules.json changed on disk; write skipped")
+            case .notAllowed: sink.log(.rules, "rules.json has invalid parts; \(what) not written")
             case .failed(let e): sink.error(where: "rules", "write failed: \(e)", category: .rules)
             }
             reloadRules(force: true)
@@ -880,18 +941,20 @@ public final class Engine: @unchecked Sendable {
         queue.async { [self] in reallyFinish(exitCode: 0) }
     }
 
-    /// `--duration` waits for an in-flight verify (at most 180 s more) so no action is left
-    /// `pending`; SIGTERM / SIGINT flush and exit right away.
+    /// `--duration` waits for an in-flight verify (at most 180 s more) and for open quit
+    /// outcomes (at most 35 s more, T11b) so no action is left `pending`; SIGTERM / SIGINT flush
+    /// and exit right away.
     public func finish(exitCode: Int32, waitForVerify: Bool = false) {
         guard !exiting else { return }
-        if waitForVerify && !verifies.isEmpty {
+        if waitForVerify && (!verifies.isEmpty || !openQuits.isEmpty) {
             guard !draining else { return }
             draining = true
             pendingExitCode = exitCode
             baseTimer?.cancel()
             displayTimer?.cancel()
-            sink.log(.actions, "duration reached with a verify in flight; finishing it first")
-            queue.asyncAfter(deadline: .now() + 180) { [self] in reallyFinish(exitCode: exitCode) }
+            sink.log(.actions, "duration reached with \(verifies.count) verify and \(openQuits.count) quit outcome(s) in flight; finishing them first")
+            let wait: Double = verifies.isEmpty ? QuitTiming.outcome + 5 : 180
+            queue.asyncAfter(deadline: .now() + wait) { [self] in reallyFinish(exitCode: exitCode) }
             return
         }
         reallyFinish(exitCode: exitCode)
@@ -931,10 +994,153 @@ public final class Engine: @unchecked Sendable {
             state.overBudget = SelfMeter.overBudget(reading, topMode: source !== live, menuShown: menuEverShown)
             lastGroups = groups
             state.ruleDisplays = ruleDisplays(snap)
+            state.quit = quitDisplay(now: Clock.wall())
             return (snap, groups, state)
         }
     }
 
     /// Runs `body` on the engine queue (tests and the app).
     public func sync<T>(_ body: () -> T) -> T { queue.sync(execute: body) }
+
+    // MARK: - Quit on last window close (v1-quit-on-close S3)
+
+    private var historyOn: Bool { history?.isOn ?? false }
+
+    /// Tests: the start sequence's state dir, lock, history and rules, with no timer, no sweep
+    /// and no signal handler.
+    func prepareForTests() {
+        queue.sync {
+            prepareState()
+            reloadRules(force: true)
+        }
+    }
+
+    /// Tests: the current state, read on the engine queue.
+    var stateForTests: EngineState { queue.sync { state } }
+
+    private func quitView() -> QuitEngineView {
+        QuitEngineView(settings: rules.quit, observeOnly: observeOnly, historyOn: historyOn,
+                       dryRun: config.dryRun, rigPrefix: config.rigQuitBundlePrefix)
+    }
+
+    private func quitDisplay(now: Double) -> QuitDisplay {
+        let settings = rules.quit
+        let paused = QuitDisplay.pausedReason(settings: settings, oneShot: oneShotMode, observeOnly: observeOnly,
+                                              historyOn: historyOn, watcher: watcherStatus)
+        let last = recentActions.filter { $0.ruleId == QuitDisplay.ruleId && !$0.dryRun && now - $0.ts <= QuitTiming.lastQuitRow }
+            .max { $0.id < $1.id }
+        let lastQuit = last.map { r in
+            QuitActionDisplay(ts: r.ts, bundleId: r.target, name: quitName(r), beforeMB: r.beforeMB, outcome: r.outcome)
+        }
+        return QuitDisplay(settings: settings, paused: paused, watching: watcherStatus?.armed ?? 0, lastQuit: lastQuit)
+    }
+
+    /// The `apps` entry's name, then the name seen at quit time, then LaunchServices, then the id.
+    private func quitName(_ r: ActionRow) -> String {
+        rules.quit.name(for: r.target) ?? quitNames[r.id] ?? appNameProvider?.name(forBundleId: r.target) ?? r.target
+    }
+
+    /// The watcher's view: re-stats `rules.json` (reloading it when its mtime or size changed),
+    /// so a menu or hand edit applies to the very next decision. Called from the watcher thread.
+    public func currentQuitView() -> QuitEngineView {
+        queue.sync {
+            reloadRules(force: false)
+            return quitView()
+        }
+    }
+
+    /// The footprint of the app's group (the coalition group holding `pid`, the number its menu
+    /// row shows), from a fresh sweep; the last snapshot's value when the sweep has no group for
+    /// it. `cpuMs` is this call's thread CPU on the engine queue.
+    public func groupFootprintMB(pid: Int32) -> (mb: Double?, cpuMs: Double) {
+        queue.sync {
+            let c0 = threadCpuMs()
+            func find(_ s: Snapshot, _ groups: [ProcessGroup]) -> Double? {
+                guard let g = groups.first(where: { g in g.members.contains { s.entries[$0].pid == pid } }),
+                      let fp = g.footprint else { return nil }
+                return Double(fp) / 1_048_576
+            }
+            let snap = source.sweep()
+            var mb = find(snap, grouper.group(snap))
+            if mb == nil, let s = lastSnapshot { mb = find(s, lastGroups) }
+            return (mb, threadCpuMs() - c0)
+        }
+    }
+
+    /// Writes the quit row first (no row, no quit: T6 `history-off`). nil when history is off,
+    /// the engine is observe-only, or the insert failed.
+    public func recordQuit(pid: Int32, bundleId: String, name: String, beforeMB: Double, dryRun: Bool,
+                           at now: Double) -> Int64? {
+        queue.sync {
+            guard !observeOnly, let h = history, h.isOn else { return nil }
+            let outcome = dryRun ? "dry-run" : "pending"
+            guard let id = h.insertAction(ts: now, ruleId: QuitDisplay.ruleId, target: bundleId, pids: [pid],
+                                          beforeMB: beforeMB, outcome: outcome, dryRun: dryRun) else {
+                historyOff(h.error ?? "insert failed")
+                return nil
+            }
+            sink.log(.actions, "action id=\(id) rule=\(QuitDisplay.ruleId) target=\(bundleId) app=\"\(name)\" pids=[\(pid)] beforeMB=\(String(format: "%.1f", beforeMB)) dryRun=\(dryRun) outcome=\(outcome)")
+            sink.emit("action", .object([
+                ("type", .string("action")),
+                ("t", .double(now)),
+                ("actionId", .int(id)),
+                ("ruleId", .string(QuitDisplay.ruleId)),
+                ("target", .string(bundleId)),
+                ("pids", .array([.i(pid)])),
+                ("beforeMB", .double(beforeMB)),
+                ("dryRun", .bool(dryRun)),
+                ("outcome", .string(outcome)),
+                ("app", .string(name)),
+            ]))
+            recentActions.append(ActionRow(id: id, ts: now, ruleId: QuitDisplay.ruleId, target: bundleId, pids: [pid],
+                                           beforeMB: beforeMB, afterMB: nil, outcome: outcome, dryRun: dryRun,
+                                           wsBeforeMB: nil, wsAfterMB: nil))
+            quitNames[id] = name
+            if !dryRun { openQuits.insert(id) }
+            recomputeActivity()
+            sendState()
+            return id
+        }
+    }
+
+    /// `ok`, `refused` or `not-sent` (T9).
+    public func updateQuitOutcome(id: Int64, outcome: String) {
+        queue.async { [self] in
+            let now = Clock.wall()
+            if let h = history, !h.updateOutcome(id: id, outcome: outcome, afterMB: nil, wsBeforeMB: nil, wsAfterMB: nil) {
+                historyOff(h.error ?? "outcome write failed")
+            }
+            sink.log(.actions, "actionOutcome id=\(id) rule=\(QuitDisplay.ruleId) outcome=\(outcome)")
+            sink.emit("actionOutcome", Actuator.outcomeJSON(t: now, actionId: id, outcome: outcome, afterMB: nil,
+                                                            wsBeforeMB: nil, wsAfterMB: nil))
+            if let i = recentActions.firstIndex(where: { $0.id == id }) { recentActions[i].outcome = outcome }
+            openQuits.remove(id)
+            recomputeActivity()
+            sendState()
+            if draining && verifies.isEmpty && openQuits.isEmpty { reallyFinish(exitCode: pendingExitCode) }
+        }
+    }
+
+    /// The watcher reports trust, availability, Stage Manager and its counts; a change emits a
+    /// `quitStatus` line and republishes.
+    public func setWatcherStatus(_ status: WatcherStatus) {
+        queue.async { [self] in
+            guard status != watcherStatus else { return }
+            watcherStatus = status
+            let paused = QuitDisplay.pausedReason(settings: rules.quit, oneShot: oneShotMode, observeOnly: observeOnly,
+                                                  historyOn: historyOn, watcher: status)
+            sink.emit("quitStatus", .object([
+                ("type", .string("quitStatus")),
+                ("t", .double(Clock.wall())),
+                ("enabled", .bool(rules.quit.isActive)),
+                ("trusted", .bool(status.trusted)),
+                ("available", .bool(status.available)),
+                ("paused", .opt(paused)),
+                ("tracked", .i(status.tracked)),
+                ("armed", .i(status.armed)),
+            ]))
+            sink.log(.quit, "quit status enabled=\(rules.quit.isActive) trusted=\(status.trusted) available=\(status.available) unavailable=\(status.unavailableReason ?? "null") stageManager=\(status.stageManager) tracked=\(status.tracked) armed=\(status.armed)")
+            sendState()
+        }
+    }
 }

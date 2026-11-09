@@ -32,7 +32,7 @@ struct RulesFileTests {
     @Test func fileLevelErrorsInvalidateTheFile() {
         #expect(decode("{not json").status == .invalid)
         #expect(decode("[]").status == .invalid)
-        #expect(decode("{\"version\":2,\"rules\":[]}").status == .invalid)
+        #expect(decode("{\"version\":3,\"rules\":[]}").status == .invalid)
         #expect(decode("{\"version\":true,\"rules\":[]}").status == .invalid)
         #expect(decode("{\"version\":1,\"rules\":[],\"extra\":1}").status == .invalid)
         #expect(decode("{\"version\":1}").status == .invalid)
@@ -107,9 +107,10 @@ struct RulesFileTests {
 
     @Test func rulesLineShape() {
         let r = decode("{\"version\":1,\"rules\":[]}")
-        #expect(r.json.serialized == "{\"type\":\"rules\",\"status\":\"ok\",\"rules\":[]}")
+        let seedIds = QuitSettings.seedApps.map { "\"\($0.bundleId)\"" }.sorted().joined(separator: ",")
+        #expect(r.json.serialized == "{\"type\":\"rules\",\"status\":\"ok\",\"rules\":[],\"quit\":{\"status\":\"default\",\"enabled\":false,\"neverQuit\":[\(seedIds)],\"error\":null}}")
         let m = RulesLoad.missing
-        #expect(m.json.serialized == "{\"type\":\"rules\",\"status\":\"missing\",\"rules\":[]}")
+        #expect(m.json.serialized == "{\"type\":\"rules\",\"status\":\"missing\",\"rules\":[],\"quit\":{\"status\":\"missing\",\"enabled\":false,\"neverQuit\":[],\"error\":null}}")
     }
 
     @Test func missingFileMeansNoRules() {

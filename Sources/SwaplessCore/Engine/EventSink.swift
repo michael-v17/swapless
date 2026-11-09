@@ -3,7 +3,7 @@ import os
 
 /// `os_log` categories (§ K).
 public enum LogCategory: String, Sendable, CaseIterable {
-    case sampler, grouping, detector, rules, actions, `self`, history
+    case sampler, grouping, detector, rules, actions, `self`, history, quit
 }
 
 /// os_log + JSON-lines emitter. Every interpolated value is `privacy: .public`, with `$HOME`
@@ -28,6 +28,12 @@ public final class EventSink: @unchecked Sendable {
     /// A `.default` (persisted) log line.
     public func log(_ category: LogCategory, _ message: String) {
         loggers[category]?.log("\(message, privacy: .public)")
+    }
+
+    /// An `.info` log line (quit decisions: not persisted by default, visible in `log stream
+    /// --info`).
+    public func info(_ category: LogCategory, _ message: String) {
+        loggers[category]?.info("\(message, privacy: .public)")
     }
 
     /// A `.debug` log line (per-sweep detail).

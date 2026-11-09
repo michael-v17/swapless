@@ -33,6 +33,10 @@ final class MenuController: NSObject, NSMenuDelegate {
     var onOpen: (() -> Void)?
     var onClose: (() -> Void)?
     var onSubmenuOpen: (() -> Void)?
+    /// The quit watcher re-reads trust and Stage Manager when the menu opens.
+    var onMenuOpen: (() -> Void)?
+    /// Running Dock apps, read when the menu opens (S5).
+    private var runningApps: [RunningApp] = []
     var onSubmenuClose: (() -> Void)?
     /// The rig's menu shows: the menu stays real, but no item acts (a stray key press from the
     /// owner while the rig's menu is open must not quit, toggle a rule or Open at login).
@@ -68,7 +72,7 @@ final class MenuController: NSObject, NSMenuDelegate {
             }
             return
         }
-        let items = MenuModel.build(MenuInput(state: state, loginEnabled: loginEnabled))
+        let items = MenuModel.build(MenuInput(state: state, loginEnabled: loginEnabled, runningApps: runningApps))
         apply(items, to: menu, prefix: "top:")
         // Forget submenu rows of groups that are no longer shown.
         let shown = Set(items.compactMap(\.groupKey))
@@ -90,7 +94,9 @@ final class MenuController: NSObject, NSMenuDelegate {
         lastSeenDot = state.dotGeneration
         onDot?(false)
         loginEnabled = LoginItem.isEnabled
+        runningApps = Self.runningApps()
         engine.setMenuOpen(true)
+        onMenuOpen?()
         refresh()
         onOpen?()
     }
@@ -243,6 +249,30 @@ final class MenuController: NSObject, NSMenuDelegate {
             refresh()
         case .quit:
             engine.requestQuit()
+        case .toggleQuitOnClose:
+            engine.setQuitEnabled(!state.quit.settings.enabled)
+        case .addNeverQuit(let id, let name):
+            engine.addNeverQuit(bundleId: id, name: name)
+        case .removeNeverQuit(let id):
+            engine.removeNeverQuit(bundleId: id)
+        case .openAccessibilitySettings:
+            // Only on the owner's click (spec v1-quit-on-close T13).
+            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                NSWorkspace.shared.open(url)
+            }
+        }
+    }
+
+    /// Running Dock apps for `Add running app` (never Swapless itself), read when the menu opens.
+    /// NSRunningApplication's properties are thread-safe, so `--print-menu` calls it too.
+    nonisolated static func runningApps() -> [RunningApp] {
+        let me = ProcessInfo.processInfo.processIdentifier
+        let names = LaunchServicesAppNames()
+        return NSWorkspace.shared.runningApplications.compactMap { a in
+            guard a.activationPolicy == .regular, a.processIdentifier != me, let id = a.bundleIdentifier,
+                  id != Bundle.main.bundleIdentifier else { return nil }
+            let name = a.localizedName.flatMap { $0.isEmpty ? nil : $0 } ?? names.name(forBundleId: id) ?? id
+            return RunningApp(bundleId: id, name: name)
         }
     }
 

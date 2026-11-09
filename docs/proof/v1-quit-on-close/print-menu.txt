@@ -1,0 +1,136 @@
+Free 49 % · Pressure normal
+Compressed 5.6 GB · Swap 3.2 GB · Swap-in —
+────────
+ChatGPT: 1.99 GB
+    Codex (Aperitif Renderer): 437 MB
+    ChatGPT: 383 MB
+    Codex (Aperitif Renderer): 267 MB
+    Codex (Aperitif Renderer): 265 MB
+    codex: 147 MB
+    node: 72 MB
+    Codex (Aperitif): 68 MB
+    Codex (Aperitif): 62 MB
+    Codex (Aperitif Renderer): 43 MB
+    node: 36 MB
+    node: 35 MB
+    SkyComputerUseService: 30 MB
+    Codex (Aperitif): 29 MB
+    Codex (Aperitif Renderer): 22 MB
+    Codex (Aperitif Renderer): 22 MB
+    + 16 smaller processes: 123 MB
+Google Chrome: 1.87 GB
+    Google Chrome: 330 MB
+    Google Chrome Helper (Aperitif Renderer): 316 MB
+    Google Chrome Helper (Aperitif Renderer): 268 MB
+    Google Chrome Helper (Aperitif): 174 MB
+    Google Chrome Helper (Aperitif Renderer): 174 MB
+    Google Chrome Helper (Aperitif Renderer): 96 MB
+    Google Chrome Helper (Aperitif Renderer): 65 MB
+    Google Chrome Helper (Aperitif Renderer): 62 MB
+    Google Chrome Helper (Aperitif Renderer): 62 MB
+    Google Chrome Helper (Aperitif Renderer): 42 MB
+    Google Chrome Helper (Aperitif Renderer): 36 MB
+    Google Chrome Helper (Aperitif Renderer): 35 MB
+    Google Chrome Helper (Aperitif Renderer): 34 MB
+    Google Chrome Helper (Aperitif Renderer): 30 MB
+    Google Chrome Helper (Aperitif Renderer): 29 MB
+    + 11 smaller processes: 158 MB
+WindowServer · system: 1.40 GB
+    + 1 system processes: 1.40 GB
+        WindowServer
+Safari: 1.35 GB
+    Web Content (pid 3679): 503 MB
+    Web Content (pid 14884): 325 MB
+    Safari: 239 MB
+    com.apple.WebKit.GPU: 60 MB
+    Web Content (pid 53840): 57 MB
+    com.apple.WebKit.Networking: 47 MB
+    com.apple.appkit.xpc.openAndSavePanelService: 38 MB
+    Web Content (pid 14962): 33 MB
+    Web Content (pid 53842): 13 MB
+    LocalAuthenticationRemoteService: 12 MB
+    Web Content (pid 54781): 11 MB
+    Web Content (pid 54782): 11 MB
+    Web Content (pid 21144): 9 MB
+    com.apple.Safari.SandboxBroker: 7 MB
+    QuickLookUIService: 7 MB
+    + 4 smaller processes: 14 MB
+Warp: 766 MB
+    stable: 671 MB
+    com.apple.SafariPlatformSupport.Helper: 18 MB
+    stable: 9 MB
+    SourceKitService: 8 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    zsh: 5 MB
+    + 2 smaller processes: 4 MB
+Slack: 672 MB
+    Slack Helper (Renderer): 453 MB
+    Slack: 109 MB
+    Slack Helper: 78 MB
+    Slack Helper: 12 MB
+    Slack Helper: 11 MB
+    Slack Helper: 7 MB
+    SetStoreUpdateService: 3 MB
+Portal: 655 MB
+    Portal: 646 MB
+    Portal Desktop Helper: 6 MB
+    SetStoreUpdateService: 3 MB
+Claude Code · project-a: 542 MB
+    2.1.318: 369 MB
+    node: 54 MB
+    node: 44 MB
+    node: 39 MB
+    node: 35 MB
+Claude Code · project-b: 502 MB
+    2.1.318: 226 MB
+    node: 66 MB
+    node: 55 MB
+    node: 42 MB
+    node: 42 MB
+    node: 35 MB
+    node: 35 MB
+Claude Code · project-a: 497 MB
+    2.1.318: 323 MB
+    node: 54 MB
+    node: 44 MB
+    node: 41 MB
+    node: 35 MB
+Everything else: 10.33 GB in 532 groups
+────────
+✓ Wallpaper guard: restarts above 1 GB
+Watching: WallpaperImageExtension 415 MB
+────────
+✓ Quit apps when their last window closes
+Paused: not watched by --print-menu
+Never quit
+    ✓ Finder (always)
+    ✓ Music
+    ✓ Portal
+    ────────
+    Add running app
+        ChatGPT
+        Gastos Casa Santiago.xlsx.app
+        Gastos Personales.xlsx.app
+        Google Chrome
+        iTerm2
+        Notes
+        Passwords
+        Safari
+        Slack
+        Warp
+        ‎WhatsApp
+────────
+Today: not recorded (not read by --print-menu)
+────────
+Swapless — % CPU idle · 5 MB · measuring: full
+Open at login
+Quit Swapless  ⌘Q

@@ -8,6 +8,7 @@ let package = Package(
         .executable(name: "Swapless", targets: ["Swapless"]),
         .executable(name: "swapless-leak-helper", targets: ["swapless-leak-helper"]),
         .executable(name: "swapless-rig", targets: ["swapless-rig"]),
+        .executable(name: "swapless-window-app", targets: ["swapless-window-app"]),
     ],
     targets: [
         // The only place private symbols are touched (spec § A).
@@ -19,6 +20,8 @@ let package = Package(
         ),
         .executableTarget(name: "Swapless", dependencies: ["SwaplessCore"]),
         .executableTarget(name: "swapless-leak-helper"),
+        // The rig's off-screen LSUIElement test app for quit on last window close.
+        .executableTarget(name: "swapless-window-app"),
         .executableTarget(name: "swapless-rig", dependencies: ["SwaplessCore"]),
         .testTarget(
             name: "SwaplessCoreTests",

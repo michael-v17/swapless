@@ -133,10 +133,10 @@ struct MenuModelTests {
         var st = state(rules: seedLoad())
         st.ruleDisplays = [RuleDisplay(ruleId: "wallpaper-leak-guard", enabled: true, thresholdMB: 1024,
                                        pausedReason: "agent-missing", lastAction: nil, triggerFootprint: 412 * MB)]
-        #expect(rulesTitles(st) == ["Wallpaper guard: restarts above 1 GB", "Paused: agent-missing", "Resume"])
+        #expect(rulesTitles(st) == ["Wallpaper guard: restarts above 1 GB", "Paused: agent-missing", "Resume", "Quit apps when their last window closes", "Never quit"])
         st.ruleDisplays = [RuleDisplay(ruleId: "wallpaper-leak-guard", enabled: true, thresholdMB: 1024,
                                        pausedReason: nil, lastAction: nil, triggerFootprint: nil)]
-        #expect(rulesTitles(st) == ["Wallpaper guard: restarts above 1 GB", "Not running"])
+        #expect(rulesTitles(st) == ["Wallpaper guard: restarts above 1 GB", "Not running", "Quit apps when their last window closes", "Never quit"])
         // An action older than 30 min falls through to Watching.
         st.ruleDisplays = [RuleDisplay(ruleId: "wallpaper-leak-guard", enabled: true, thresholdMB: 1024,
                                        pausedReason: nil,
@@ -148,14 +148,14 @@ struct MenuModelTests {
 
     @Test func restoreOnlyWhenTheFileIsMissing() {
         let missing = rulesTitles(state(rules: .missing))
-        #expect(missing == ["No wallpaper rule", "Restore default rules"])
+        #expect(missing == ["No wallpaper rule", "Quit apps when their last window closes", "Never quit", "Restore default rules"])
         let empty = RulesFile.decode(Data("{\"version\":1,\"rules\":[]}".utf8), allowedTargets: ["wallpaper"])
         let t = rulesTitles(state(rules: empty))
-        #expect(t == ["No wallpaper rule", "Open rules file…"])
+        #expect(t == ["No wallpaper rule", "Quit apps when their last window closes", "Never quit", "Open rules file…"])
         #expect(!t.contains("Restore default rules"))
         let invalid = RulesFile.decode(Data("{nope".utf8), allowedTargets: ["wallpaper"])
         let ti = rulesTitles(state(rules: invalid))
-        #expect(ti == ["No wallpaper rule", "rules.json: not valid JSON", "Open rules file…"])
+        #expect(ti == ["No wallpaper rule", "Quit apps when their last window closes", "Never quit", "rules.json: not valid JSON", "Open rules file…"])
     }
 
     @Test func toggleDisabledWhileAnythingIsInvalid() throws {
@@ -208,7 +208,7 @@ struct MenuModelTests {
         #expect("Today: " + MenuModel.activityBody(counts(2, freed: 2851.1)) == "Today: 2 restarts · 2.8 GB freed")
         #expect("Today: " + MenuModel.activityBody(counts(1)) == "Today: 1 restart")
         #expect("Today: " + MenuModel.activityBody(counts(3, failed: 1, freed: 2150)) == "Today: 3 restarts (1 failed) · 2.1 GB freed")
-        #expect("Today: " + MenuModel.activityBody(counts(0)) == "Today: no restarts")
+        #expect("Today: " + MenuModel.activityBody(counts(0)) == "Today: no restarts or quits")
         #expect("7 days: " + MenuModel.activityBody(counts(7, freed: 9113.6)) == "7 days: 7 restarts · 8.9 GB freed")
         #expect(MenuModel.activityBody(counts(1, freed: -50)) == "1 restart · 0 MB freed")
         #expect(MenuModel.activityBody(counts(1, freed: 512.4)) == "1 restart · 512 MB freed")
@@ -235,10 +235,10 @@ struct MenuModelTests {
         #expect(c.map(\.slot) == ["today.day.0", "today.day.1", "today.day.2", "today.day.3", "today.day.4",
                                   "today.day.5", "today.day.6", "today.sep", "today.total"])
         #expect(c[0].title == "Today: 2 restarts · 2.8 GB freed")
-        #expect(c[1].title == "Yesterday: no restarts")
-        #expect(c[2].title == "Wed 4 Nov: no restarts")
+        #expect(c[1].title == "Yesterday: no restarts or quits")
+        #expect(c[2].title == "Wed 4 Nov: no restarts or quits")
         #expect(c[3].title == "Tue 3 Nov: not running")
-        #expect(c[4].title == "Mon 2 Nov: no restarts")
+        #expect(c[4].title == "Mon 2 Nov: no restarts or quits")
         #expect(c[6].title == "Sat 31 Oct: not running")
         #expect(c[7].isSeparator)
         #expect(c[8].title == "7 days: 2 restarts · 2.8 GB freed")

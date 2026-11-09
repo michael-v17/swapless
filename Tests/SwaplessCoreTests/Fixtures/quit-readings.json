@@ -1,0 +1,958 @@
+{
+ "chrome-closed": {
+  "note": "Synthetic: the window closed (no Space); the 2 off-screen windows stay on Space 5",
+  "reading": {
+   "ax": [],
+   "cg": [
+    {
+     "id": 41980,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41981,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41982,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41983,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41984,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41985,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41986,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41987,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41988,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41989,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41990,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41991,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41992,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41993,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41995,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41996,
+     "layer": 0,
+     "spaces": [
+      5
+     ]
+    },
+    {
+     "id": 41997,
+     "layer": 0,
+     "spaces": [
+      5
+     ]
+    }
+   ],
+   "visibleSpaces": [
+    5,
+    1379,
+    1382
+   ]
+  }
+ },
+ "chrome-closed-owner-moved": {
+  "note": "Synthetic: the same, owner on Space 6",
+  "reading": {
+   "ax": [],
+   "cg": [
+    {
+     "id": 41980,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41981,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41982,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41983,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41984,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41985,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41986,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41987,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41988,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41989,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41990,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41991,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41992,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41993,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41995,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41996,
+     "layer": 0,
+     "spaces": [
+      5
+     ]
+    },
+    {
+     "id": 41997,
+     "layer": 0,
+     "spaces": [
+      5
+     ]
+    }
+   ],
+   "visibleSpaces": [
+    6,
+    1379,
+    1382
+   ]
+  }
+ },
+ "chrome-open": {
+  "note": "Snapshot: 1 window + 2 off-screen windows on the visible Space 5",
+  "reading": {
+   "ax": [
+    {
+     "id": 41995,
+     "minimized": false,
+     "role": "AXWindow",
+     "subrole": "AXStandardWindow"
+    }
+   ],
+   "cg": [
+    {
+     "id": 41980,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41981,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41982,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41983,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41984,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41985,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41986,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41987,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41988,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41989,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41990,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41991,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41992,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41993,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41995,
+     "layer": 0,
+     "spaces": [
+      5
+     ]
+    },
+    {
+     "id": 41996,
+     "layer": 0,
+     "spaces": [
+      5
+     ]
+    },
+    {
+     "id": 41997,
+     "layer": 0,
+     "spaces": [
+      5
+     ]
+    }
+   ],
+   "visibleSpaces": [
+    5,
+    1379,
+    1382
+   ]
+  }
+ },
+ "notes-closed": {
+  "note": "Run A 47.138: red X; 43392 ordered out, no Space",
+  "reading": {
+   "ax": [],
+   "cg": [
+    {
+     "id": 43380,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43381,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43382,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43383,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43384,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43385,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43386,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43387,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43388,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43389,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43390,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43391,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43393,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43392,
+     "layer": 0,
+     "spaces": []
+    }
+   ],
+   "visibleSpaces": [
+    6,
+    1379,
+    1382
+   ]
+  }
+ },
+ "notes-minimized-other-space": {
+  "note": "Run A 31.141: minimized, owner on Space 5",
+  "reading": {
+   "ax": [
+    {
+     "id": 43392,
+     "minimized": true,
+     "role": "AXWindow",
+     "subrole": "AXDialog"
+    }
+   ],
+   "cg": [
+    {
+     "id": 43380,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43381,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43382,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43383,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43384,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43385,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43386,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43387,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43388,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43389,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43390,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43391,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43393,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43392,
+     "layer": 0,
+     "spaces": [
+      6
+     ]
+    }
+   ],
+   "visibleSpaces": [
+    5,
+    1379,
+    1382
+   ]
+  }
+ },
+ "notes-minimized-visible": {
+  "note": "Run A 25.576: minimized, subrole AXDialog, owner on Space 6",
+  "reading": {
+   "ax": [
+    {
+     "id": 43392,
+     "minimized": true,
+     "role": "AXWindow",
+     "subrole": "AXDialog"
+    }
+   ],
+   "cg": [
+    {
+     "id": 43380,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43381,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43382,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43383,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43384,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43385,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43386,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43387,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43388,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43389,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43390,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43391,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43393,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43392,
+     "layer": 0,
+     "spaces": [
+      6
+     ]
+    }
+   ],
+   "visibleSpaces": [
+    6,
+    1379,
+    1382
+   ]
+  }
+ },
+ "notes-open": {
+  "note": "Run A 19.684: window open on Space 6",
+  "reading": {
+   "ax": [
+    {
+     "id": 43392,
+     "minimized": false,
+     "role": "AXWindow",
+     "subrole": "AXStandardWindow"
+    }
+   ],
+   "cg": [
+    {
+     "id": 43380,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43381,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43382,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43383,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43384,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43385,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43386,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43387,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43388,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43389,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43390,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43391,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43393,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43392,
+     "layer": 0,
+     "spaces": [
+      6
+     ]
+    }
+   ],
+   "visibleSpaces": [
+    6,
+    1379,
+    1382
+   ]
+  }
+ },
+ "notes-other-space": {
+  "note": "Snapshot 2026-11-06: window on Space 6, owner on Space 5, AX empty",
+  "reading": {
+   "ax": [],
+   "cg": [
+    {
+     "id": 43380,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43381,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43382,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43383,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43384,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43385,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43386,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43387,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43388,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43389,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43390,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43391,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43393,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 41836,
+     "layer": 0,
+     "spaces": [
+      6
+     ]
+    }
+   ],
+   "visibleSpaces": [
+    5,
+    1379,
+    1382
+   ]
+  }
+ },
+ "slack-hidden": {
+  "note": "Run B 16.122: \u2318W; 43438 hidden but still on Space 6",
+  "reading": {
+   "ax": [],
+   "cg": [
+    {
+     "id": 43453,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43454,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43455,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43456,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43457,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43458,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43459,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43460,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43461,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43462,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43463,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43464,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43465,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43438,
+     "layer": 0,
+     "spaces": [
+      6
+     ]
+    }
+   ],
+   "visibleSpaces": [
+    6,
+    1379,
+    1382
+   ]
+  }
+ },
+ "slack-hidden-owner-moved": {
+  "note": "Run B, synthetic: the same, owner switched to Space 5 before the decision",
+  "reading": {
+   "ax": [],
+   "cg": [
+    {
+     "id": 43453,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43454,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43455,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43456,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43457,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43458,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43459,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43460,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43461,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43462,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43463,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43464,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43465,
+     "layer": 0,
+     "spaces": []
+    },
+    {
+     "id": 43438,
+     "layer": 0,
+     "spaces": [
+      6
+     ]
+    }
+   ],
+   "visibleSpaces": [
+    5,
+    1379,
+    1382
+   ]
+  }
+ },
+ "slack-open": {
+  "note": "Run B 0.364",
+  "reading": {
+   "ax": [
+    {
+     "id": 43438,
+     "minimized": false,
+     "role": "AXWindow",
+     "subrole": "AXStandardWindow"
+    }
+   ],
+   "cg": [
+    {
+     "id": 43438,
+     "layer": 0,
+     "spaces": [
+      6
+     ]
+    }
+   ],
+   "visibleSpaces": [
+    6,
+    1379,
+    1382
+   ]
+  }
+ }
+}

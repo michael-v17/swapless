@@ -53,11 +53,27 @@ public struct RulesLoad: Sendable, Equatable {
     public var fileError: String?
     public var mtime: timespec?
     public var size: Int64?
+    /// The quit-on-last-window section (v1-quit-on-close S1).
+    public var quit: QuitSettings
+
+    public init(status: RulesStatus, entries: [RuleEntry], fileError: String?, mtime: timespec?,
+                size: Int64?, quit: QuitSettings? = nil) {
+        self.status = status
+        self.entries = entries
+        self.fileError = fileError
+        self.mtime = mtime
+        self.size = size
+        switch status {
+        case .ok: self.quit = quit ?? .defaults
+        case .invalid: self.quit = quit ?? .invalid(nil)
+        case .missing: self.quit = quit ?? .missing
+        }
+    }
 
     public static func == (a: RulesLoad, b: RulesLoad) -> Bool {
         a.status == b.status && a.entries == b.entries && a.fileError == b.fileError
             && a.size == b.size && a.mtime?.tv_sec == b.mtime?.tv_sec
-            && a.mtime?.tv_nsec == b.mtime?.tv_nsec
+            && a.mtime?.tv_nsec == b.mtime?.tv_nsec && a.quit == b.quit
     }
 
     public static let missing = RulesLoad(status: .missing, entries: [], fileError: nil,
@@ -66,8 +82,10 @@ public struct RulesLoad: Sendable, Equatable {
     /// Only valid rules count; an invalid file means no rules.
     public var validRules: [Rule] { entries.compactMap(\.rule) }
 
-    /// The toggle is enabled only when the file parsed and every rule is valid.
-    public var allValid: Bool { status == .ok && entries.allSatisfy(\.valid) }
+    /// Any write is allowed only when the file parsed, every rule is valid and the quit section
+    /// is valid (or a v1 file's defaults). Every write re-encodes the whole model, so an invalid
+    /// quit section disables the wallpaper toggle too (intended; `Open rules file…` is the way out).
+    public var allValid: Bool { status == .ok && entries.allSatisfy(\.valid) && quit.writable }
 
     /// The `rules` JSON line (S6).
     public var json: JSON {
@@ -81,6 +99,7 @@ public struct RulesLoad: Sendable, Equatable {
                     ("error", .opt(e.error)),
                 ])
             })),
+            ("quit", quit.json),
         ])
     }
 
@@ -92,6 +111,7 @@ public struct RulesLoad: Sendable, Equatable {
             let en = e.enabled.map { String($0) } ?? "null"
             parts.append("rule id=\(e.id) valid=\(e.valid) enabled=\(en) error=\(e.error.map { "\"\($0)\"" } ?? "null")")
         }
+        parts.append("quit status=\(quit.status.rawValue) enabled=\(quit.enabled) neverQuit=\(quit.neverQuitIds.count) error=\(quit.error.map { "\"\($0)\"" } ?? "null")")
         return parts.joined(separator: " · ")
     }
 }
@@ -111,6 +131,8 @@ struct RuleError: Error {
 public enum RulesFile {
     public static let fileName = "rules.json"
     public static let topLevelKeys: Set<String> = ["version", "rules"]
+    /// Version 2 adds the quit section (v1-quit-on-close T1).
+    public static let topLevelKeysV2: Set<String> = ["version", "rules", "quitOnLastWindow", "apps"]
     public static let ruleKeys: Set<String> = [
         "id", "note", "enabled", "target", "action", "footprintAboveMB", "consecutiveSamples",
         "cooldownMinutes", "maxPerDay",
@@ -160,11 +182,14 @@ public enum RulesFile {
             return invalid("not valid JSON")
         }
         guard let top = obj as? [String: Any] else { return invalid("not a JSON object") }
-        if let unknown = top.keys.sorted().first(where: { !topLevelKeys.contains($0) }) {
+        if let unknown = top.keys.sorted().first(where: { !topLevelKeysV2.contains($0) }) {
             return invalid("unknown top-level key '\(unknown)'")
         }
-        guard let version = JSONRead.int(top["version"]), version == 1 else {
-            return invalid("version must be 1")
+        guard let version = JSONRead.int(top["version"]), version == 1 || version == 2 else {
+            return invalid("version must be 1 or 2")
+        }
+        if version == 1, let unknown = top.keys.sorted().first(where: { !topLevelKeys.contains($0) }) {
+            return invalid("unknown top-level key '\(unknown)'")
         }
         guard let rawRules = top["rules"] as? [Any] else { return invalid("'rules' must be an array") }
 
@@ -187,7 +212,8 @@ public enum RulesFile {
             }
             entries.append(e)
         }
-        return RulesLoad(status: .ok, entries: entries, fileError: nil, mtime: nil, size: nil)
+        let quit: QuitSettings = version == 2 ? QuitSettings.decode(top: top) : .defaults
+        return RulesLoad(status: .ok, entries: entries, fileError: nil, mtime: nil, size: nil, quit: quit)
     }
 
     static func decodeRule(_ raw: Any, allowedTargets: Set<String>) -> RuleEntry {
@@ -281,14 +307,14 @@ extension RulesFile {
             let e = errno
             return e == EEXIST ? .dirExisted : .failed(String(cString: strerror(e)))
         }
-        switch atomicWrite(encode([seedRule]), to: url(in: defaultStateDir)) {
+        switch atomicWrite(encode([seedRule], quit: .seed), to: url(in: defaultStateDir)) {
         case nil: return .seeded
         case let msg?: return .failed(msg)
         }
     }
 
-    /// Pretty-printed, sorted keys, through the model.
-    public static func encode(_ rules: [Rule]) -> Data {
+    /// Pretty-printed, sorted keys, through the model. Always version 2 (S1).
+    public static func encode(_ rules: [Rule], quit: QuitSettings) -> Data {
         let arr: [[String: Any]] = rules.map { r in
             var d: [String: Any] = [
                 "id": r.id, "enabled": r.enabled, "target": r.target.rawValue, "action": r.action,
@@ -298,7 +324,8 @@ extension RulesFile {
             if let n = r.note { d["note"] = n }
             return d
         }
-        let top: [String: Any] = ["version": 1, "rules": arr]
+        let top: [String: Any] = ["version": 2, "rules": arr, "quitOnLastWindow": quit.encodedSection,
+                                  "apps": quit.encodedApps]
         let data = (try? JSONSerialization.data(withJSONObject: top, options: [.prettyPrinted, .sortedKeys])) ?? Data()
         return data + Data("\n".utf8)
     }
@@ -334,14 +361,55 @@ extension RulesFile {
             if r.id == ruleId { r.enabled = enabled }
             return r
         }
-        if let e = atomicWrite(encode(rules), to: url) { return .failed(e) }
+        return write(url: url, load: load, rules: rules, quit: load.quit)
+    }
+
+    /// The guarded write every menu action shares: whole file valid, unchanged on disk since the
+    /// load, then an atomic v2 write through the model.
+    static func write(url: URL, load: RulesLoad, rules: [Rule], quit: QuitSettings) -> WriteResult {
+        guard load.allValid else { return .notAllowed }
+        guard unchanged(url, since: load) else { return .skippedChanged }
+        var q = quit
+        q.status = .ok
+        q.error = nil
+        if let e = atomicWrite(encode(rules, quit: q), to: url) { return .failed(e) }
         return .written
+    }
+
+    /// The menu's `Quit apps when their last window closes` toggle (S5).
+    public static func writeQuitEnabled(url: URL, load: RulesLoad, enabled: Bool) -> WriteResult {
+        var q = load.quit
+        q.enabled = enabled
+        return write(url: url, load: load, rules: load.validRules, quit: q)
+    }
+
+    /// `Never quit <Name>` / `Add running app`: adds the entry, or sets `neverQuit` on an
+    /// existing one (keeping its name and note).
+    public static func addNeverQuit(url: URL, load: RulesLoad, bundleId: String, name: String,
+                                    now: Double, timeZone: TimeZone) -> WriteResult {
+        var q = load.quit
+        if let i = q.apps.firstIndex(where: { $0.bundleId == bundleId }) {
+            q.apps[i].neverQuit = true
+        } else {
+            let c = ActivitySummary.calendar(timeZone).dateComponents([.year, .month, .day],
+                                                                     from: Date(timeIntervalSince1970: now))
+            let day = ActivitySummary.dayKey(year: c.year ?? 0, month: c.month ?? 0, day: c.day ?? 0)
+            q.apps.append(AppEntry(bundleId: bundleId, name: name, neverQuit: true, note: "Added from the menu \(day)"))
+        }
+        return write(url: url, load: load, rules: load.validRules, quit: q)
+    }
+
+    /// A click on a `Never quit` row: deletes the entry.
+    public static func removeNeverQuit(url: URL, load: RulesLoad, bundleId: String) -> WriteResult {
+        var q = load.quit
+        q.apps.removeAll { $0.bundleId == bundleId }
+        return write(url: url, load: load, rules: load.validRules, quit: q)
     }
 
     /// `Restore default rules`: only when the file is missing; if it appeared meanwhile, reload.
     public static func restoreDefault(url: URL) -> WriteResult {
         if fileStat(url) != nil { return .skippedChanged }
-        if let e = atomicWrite(encode([seedRule]), to: url) { return .failed(e) }
+        if let e = atomicWrite(encode([seedRule], quit: .seed), to: url) { return .failed(e) }
         return .written
     }
 }

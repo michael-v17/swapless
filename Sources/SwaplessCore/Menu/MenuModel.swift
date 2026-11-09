@@ -8,6 +8,22 @@ public enum MenuAction: Sendable, Equatable {
     case openRules
     case toggleLogin
     case quit
+    /// v1-quit-on-close S5.
+    case toggleQuitOnClose
+    case addNeverQuit(String, String)
+    case removeNeverQuit(String)
+    case openAccessibilitySettings
+}
+
+/// A running Dock app the `Add running app` submenu can offer (S5).
+public struct RunningApp: Sendable, Equatable {
+    public var bundleId: String
+    public var name: String
+
+    public init(bundleId: String, name: String) {
+        self.bundleId = bundleId
+        self.name = name
+    }
 }
 
 /// One row of the pure text model. `slot` is a stable id so the app can update rows in place.
@@ -118,14 +134,18 @@ public struct MenuInput: Sendable {
     public var loginEnabled: Bool
     public var now: Double
     public var timeZone: TimeZone
+    /// Running Dock apps (bundle id, `localizedName`), read when the menu opens (S5).
+    public var runningApps: [RunningApp]
 
     public init(state: EngineState, compressed: [Int32: UInt64] = [:], loginEnabled: Bool = false,
-                now: Double = Date().timeIntervalSince1970, timeZone: TimeZone = .current) {
+                now: Double = Date().timeIntervalSince1970, timeZone: TimeZone = .current,
+                runningApps: [RunningApp] = []) {
         self.state = state
         self.compressed = compressed
         self.loginEnabled = loginEnabled
         self.now = now
         self.timeZone = timeZone
+        self.runningApps = runningApps
     }
 }
 
@@ -324,6 +344,7 @@ public enum MenuModel {
         } else {
             rows.append(MenuItem(slot: "rule.none", title: "No wallpaper rule"))
         }
+        rows += quitRows(input)
         if rules.status == .invalid {
             rows.append(MenuItem(slot: "rule.error.file", title: "rules.json: \(rules.fileError ?? "invalid")"))
         }
@@ -338,6 +359,68 @@ public enum MenuModel {
             rows.append(MenuItem(slot: "rule.open", title: "Open rules file…", enabled: true,
                                  action: .openRules))
         }
+        return rows
+    }
+
+    // MARK: quit on last window close (v1-quit-on-close S5)
+
+    public static let quitToggleTitle = "Quit apps when their last window closes"
+
+    static func quitRows(_ input: MenuInput) -> [MenuItem] {
+        let st = input.state
+        let q = st.quit
+        let s = q.settings
+        let writable = st.rules.allValid && !st.observeOnly
+        let invalid = s.status == .invalid
+        var rows: [MenuItem] = [.separator("sep.quit")]
+        rows.append(MenuItem(slot: "quit.toggle", title: quitToggleTitle, enabled: writable, checked: s.enabled,
+                             action: .toggleQuitOnClose))
+        let protected = s.neverQuitIds.union([QuitSettings.finderBundleId])
+        if s.enabled || invalid {
+            if let p = q.paused {
+                rows.append(MenuItem(slot: "quit.status", title: "Paused: \(p)"))
+                if p == "needs Accessibility" {
+                    rows.append(MenuItem(slot: "quit.accessibility", title: "Open Accessibility settings…", enabled: true,
+                                         action: .openAccessibilitySettings))
+                }
+            } else if let l = q.lastQuit, ["pending", "ok", "refused", "not-sent"].contains(l.outcome) {
+                let at = hhmm(l.ts, input.timeZone)
+                let title: String
+                switch l.outcome {
+                case "pending": title = "Quitting \(l.name)…"
+                case "ok": title = "Last quit \(at): \(l.name) · \(valueMB(l.beforeMB))"
+                case "refused": title = "\(at): \(l.name) didn't quit · left open"
+                default: title = "\(at): \(l.name) couldn't be asked to quit"
+                }
+                rows.append(MenuItem(slot: "quit.status", title: title))
+                if (l.outcome == "ok" || l.outcome == "refused") && !protected.contains(l.bundleId) {
+                    rows.append(MenuItem(slot: "quit.never.offer", title: "Never quit \(l.name)", enabled: writable,
+                                         action: .addNeverQuit(l.bundleId, l.name)))
+                }
+            } else {
+                rows.append(MenuItem(slot: "quit.status", title: "Watching \(q.watching) app\(q.watching == 1 ? "" : "s")"))
+            }
+        }
+        if invalid, let e = s.error {
+            rows.append(MenuItem(slot: "quit.error", title: "rules.json: \(e)"))
+        }
+        var kids = [MenuItem(slot: "quit.never.finder", title: "Finder (always)", enabled: false, checked: true)]
+        for a in s.apps where a.neverQuit {
+            kids.append(MenuItem(slot: "quit.never.app.\(a.bundleId)", title: a.name, enabled: writable, checked: true,
+                                 action: .removeNeverQuit(a.bundleId)))
+        }
+        kids.append(.separator("quit.never.sep"))
+        let candidates = input.runningApps.filter { !protected.contains($0.bundleId) }
+            .sorted { a, b in
+                let c = a.name.localizedCaseInsensitiveCompare(b.name)
+                return c == .orderedSame ? a.bundleId < b.bundleId : c == .orderedAscending
+            }
+        let addKids: [MenuItem] = candidates.isEmpty
+            ? [MenuItem(slot: "quit.add.none", title: "No other apps running")]
+            : candidates.map { MenuItem(slot: "quit.add.app.\($0.bundleId)", title: $0.name, enabled: writable,
+                                        action: .addNeverQuit($0.bundleId, $0.name)) }
+        kids.append(MenuItem(slot: "quit.add", title: "Add running app", enabled: true, children: addKids))
+        rows.append(MenuItem(slot: "quit.never", title: "Never quit", enabled: true, children: kids))
         return rows
     }
 
@@ -379,16 +462,18 @@ public enum MenuModel {
         d.running ? activityBody(d.counts) : "not running"
     }
 
-    /// `2 restarts (1 failed) · 2.8 GB freed`, or `no restarts`.
+    /// `2 restarts (1 failed) · 3 quits · 4.1 GB freed`, or `no restarts or quits`
+    /// (v1-quit-on-close S4: the failed suffix attaches to the restarts part).
     public static func activityBody(_ c: ActivityCounts) -> String {
         let parts = ActivityKind.allCases.compactMap { k -> String? in
             let n = c.count(k)
             guard n > 0 else { return nil }
-            return "\(n) \(k.rawValue)\(n == 1 ? "" : "s")"
+            var p = "\(n) \(k.rawValue)\(n == 1 ? "" : "s")"
+            if k == .restart && c.failed > 0 { p += " (\(c.failed) failed)" }
+            return p
         }
-        guard !parts.isEmpty else { return "no restarts" }
+        guard !parts.isEmpty else { return "no restarts or quits" }
         var s = parts.joined(separator: " · ")
-        if c.failed > 0 { s += " (\(c.failed) failed)" }
         if let f = c.freedMB { s += " · \(freed(f)) freed" }
         return s
     }

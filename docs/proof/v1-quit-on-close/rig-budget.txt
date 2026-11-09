@@ -1,0 +1,54 @@
+swapless-rig · mode budget · checks 1,2,3,4,5,9 · 2026-11-06 19:00:25 +0000
+debug-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Debug · release-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Release
+preflight: free 38 % < 40; polling again in 30 s
+preflight: free 36 % < 40; polling again in 30 s
+preflight: free 38 % < 40; polling again in 30 s
+preflight: free 39 % < 40; polling again in 30 s
+preflight: PASS free 41 % · wallpaper baseline [33605@1793968875.101779, 33607@1793968875.395420]
+  check 1 [coalition-mode] source=coalition selfCheck=pass checked=10 passed=10 windowServer=pass
+  check 1 [coalition-mode] T0=1793991746.323 T1=1793991746.916 before.t=1793991746.217 after.t=1793991748.415
+  check 1 [coalition-mode] helper top=258.0 MiB engine=257.8 MiB/257.8 MiB ok
+  check 1 [coalition-mode] helper footprint(1)=257.8 MiB vs after 257.8 MiB Δ=0.0 MiB
+  check 1 [coalition-mode] WallpaperImageExtension top=415.0 MiB engine=415.3 MiB/415.3 MiB ok
+  check 1 [coalition-mode] WindowServer group (1 members) Σtop=1468.0 MiB engine=1468.0 MiB/1471.0 MiB tol=15.7 MiB ok
+  check 1 [coalition-mode] broad 61/61 same-user ≥ 50 MB within tol (100.0 %)
+  check 1 [coalition-mode] coverage: top 746 pids, sample 745 members, 0 gone/new, 0 missing
+  check 1 [top-mode] T0=1793991749.690 T1=1793991750.304 before.t=1793991749.618 after.t=1793991751.805
+  check 1 [top-mode] helper top=258.0 MiB engine=257.7 MiB/257.7 MiB ok
+  check 1 [top-mode] helper footprint(1)=257.7 MiB vs after 257.7 MiB Δ=0.0 MiB
+  check 1 [top-mode] WallpaperImageExtension top=415.0 MiB engine=415.3 MiB/415.3 MiB ok
+  check 1 [top-mode] WindowServer group (1 members) Σtop=1471.0 MiB engine=1461.0 MiB/1461.0 MiB tol=15.7 MiB ok
+  check 1 [top-mode] broad 61/61 same-user ≥ 50 MB within tol (100.0 %)
+  check 1 [top-mode] coverage: top 746 pids, sample 743 members, 2 gone/new, 0 missing
+check 1 footprint-matches-top: PASS both runs matched top
+check 2 growth-flagged: FAIL memory-floor: the sawtooth helper refused to allocate (kern.memorystatus_level < 30)
+  check 3: check-2 run: 0 actions, markers [], helpers not exiting on their own []; wallpaper identities unchanged
+  check 3: (a) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (b) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (c) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (d) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (e) release · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+check 3 no-action-without-rule: PASS no action without a rule in 6 runs
+  check 4: 1 action(s), 1 outcome(s); A exit 143, B exit 0
+  check 4: a.marker 0.00 s after the action
+  check 4: decision cooldown after B's second sample above 200 MB
+  check 4: check-4 engine's last activity line: total.restarts 1
+  check 4: 4b (relaunch on check 4's state dir): recorded true, total.restarts 1, failed 0, freedMB null, 7 days, today running true
+  check 4: wallpaper dry run: 1 action(s), dryRun=1, outcome=dry-run, pids [33605, 33607] vs restart set [33605, 33607], 0 outcome line(s), identities unchanged 5 s later
+check 4 ruled-action-once: PASS 1 action(s), 1 outcome(s); A exit 143, B exit 0 · a.marker 0.00 s after the action · decision cooldown after B's second sample above 200 MB · check-4 engine's last activity line: total.restarts 1 · 4b (relaunch on check 4's state dir): recorded true, total.restarts 1, failed 0, freedMB null, 7 days, today running true · wallpaper dry run: 1 action(s), dryRun=1, outcome=dry-run, pids [33605, 33607] vs restart set [33605, 33607], 0 outcome line(s), identities unchanged 5 s later
+  check 5: installed Swapless pid 25685; CPU budget 0.2 % (coalition mode)
+  check 5: self line 1: cpuSeconds 1.038 (ps 1.04) footprint 20.8 MiB (footprint(1) 20.8 MiB) menuOpenSeconds 0.0
+  check 5: self line 2: cpuSeconds 1.359 (ps 1.36) footprint 20.9 MiB (footprint(1) 20.9 MiB) menuOpenSeconds 0.0
+  check 5: self line 3: cpuSeconds 1.682 (ps 1.68) footprint 21.0 MiB (footprint(1) 21.0 MiB) menuOpenSeconds 0.0
+  check 5: idle agreement: cpuPct10mIdle 0.107 vs window 0.107 (|Δ| 0.000 pp, limit 0.02)
+  check 5: window 600 s · CPU 0.107 % (Δps 0.64 s) · cpuPct10mIdle 0.107 vs window 0.107 (|Δ| 0.000 pp, limit 0.02) · top MEM 21.0 MiB (limit 30 MiB, menu never shown) · peak 21.4 MiB
+  check 5c: quit-on-close on, tracking 13 apps · CPU 0.110 % over 600 s (limit 0.2, coalition mode; warm-up 0.2 s CPU) · footprint 7.2 MiB · peak 9.3 MiB
+  check 5c budget-with-quit-on-close: PASS CPU 0.110 %, footprint 7.2 MiB, peak 9.3 MiB
+  check 5: peak test: 20 menu cycles, ri_lifetime_max_phys_footprint 12.7 MiB, exit 0
+  check 5: menu draw test (offscreen: no status item, window never ordered on screen): 50 draws, 7302 rows drawn, 0 visible; footprint before 10.2 MiB, 60 s after 13.1 MiB (for the record: offscreen doesn't reproduce the on-screen cost), peak 15.1 MiB (limit 45 MiB)
+  check 5: menu-open test: 60 s open, displaySweeps 12 (12–13), publishes 13 (≤ 14), refreshes 14 (≤ 14), compressedReadBatches 3 (== 3), submenusOpened 3, cpuSecondsOpen 0.264, cpuPercentOpen 0.440 % (≤ 1.0), tail 0.083 s = 0.069 % over 120 s (≤ 0.3), windows 0 (offscreen: the on-screen cost is the owner's acceptance)
+check 5 budget: PASS window 600 s · CPU 0.107 % (Δps 0.64 s) · cpuPct10mIdle 0.107 vs window 0.107 (|Δ| 0.000 pp, limit 0.02) · top MEM 21.0 MiB (limit 30 MiB, menu never shown) · peak 21.4 MiB · CPU 0.110 %, footprint 7.2 MiB, peak 9.3 MiB · peak test: 20 menu cycles, ri_lifetime_max_phys_footprint 12.7 MiB, exit 0 · menu draw test (offscreen: no status item, window never ordered on screen): 50 draws, 7302 rows drawn, 0 visible; footprint before 10.2 MiB, 60 s after 13.1 MiB (for the record: offscreen doesn't reproduce the on-screen cost), peak 15.1 MiB (limit 45 MiB) · menu-open test: 60 s open, displaySweeps 12 (12–13), publishes 13 (≤ 14), refreshes 14 (≤ 14), compressedReadBatches 3 (== 3), submenusOpened 3, cpuSecondsOpen 0.264, cpuPercentOpen 0.440 % (≤ 1.0), tail 0.083 s = 0.069 % over 120 s (≤ 0.3), windows 0 (offscreen: the on-screen cost is the owner's acceptance)
+  check 9: walls ok (no force quit anywhere; one .terminate() in QuitSender.swift)
+  check 9: engines up, trusted and available (live tracks 13 apps, read-only)
+check 9 quit-on-last-window-close: FAIL close-ax: no AXStandardWindow of [44928] in its AX list (["0 -"])
+rig: FAIL · 2 failed · 0 skipped · report ~/Desktop/Projects/Personal/Swapless/.build/rig/rig-20261106-130025-budget.txt

@@ -16,6 +16,255 @@ the owner if it's wrong?":
 `/ship-task` step 3 checks these on every shipment. Discretionary entries stay welcome —
 the triggers are a floor, not a ceiling.
 
+## 2026-11-06 · v1-quit-on-close: the slice order changes, and how it fires where MagicQuit didn't
+
+**Slice order (owner, 2026-11-05, revised 2026-11-06):** quit on last window close (the old slice
+4) comes **next**, built during the week slice 2 (alerts, the "what grows" map, the
+Claude/Safari question) waits for recorded data. It replaces the order in the v1-core entry
+below:
+1. v1-core (shipped, PR #1);
+2. v1-menu-today (shipped, PR #2);
+3. **v1-quit-on-close**;
+4. alerts and "what grows";
+5. the rules editor, with idle quit.
+
+**Decided (owner, in the `/wingman` session for `specs/v1-quit-on-close.md`):**
+- **Off by default;** an on/off option in the menu.
+- **A Never-quit list edited from the menu.** Seed: Portal, Music, WhatsApp, Messages, Mail,
+  Tailscale, ZeroTier, MausBot (installed as `OpenMausBot.app`), iTerm2, Warp, Claude.app.
+  Finder is always protected. Spotify, Teams, Zoom and Xcode were offered and **not** added
+  ("de momento").
+- **Grace delay 5 s** after the last window closes, confirmed again 0.5 s later.
+- **Quits add their footprint at quit time to the same "freed" total** as restarts:
+  `Today: 1 restart · 3 quits · 4.1 GB freed`.
+- **Feedback in the menu only:** `Last quit 14:02: Notes · 312 MB` with a one-click `Never quit
+  Notes`. No dot, no notification.
+- **Quitting goes through the app's own Quit.** An app that refuses or asks is left alone. A
+  minimized window, or one on another Space, counts as a window. Idle quit waits.
+- **Accessibility is the owner's step at acceptance**, after the self-signed re-sign, so the
+  grant survives rebuilds.
+
+**Settled by the spec (argued there; measured in `docs/research/2026-11-06-quit-on-close-probes.md`):**
+- **Why MagicQuit never fired on Notes:** Notes keeps 14–15 layer-0 windows in the window
+  server even with no window open (helpers, and its own closed window, ordered out). MagicQuit
+  2.0 counted those. Swapless counts:
+  - every AX window except a floating panel, and minimized windows always (a minimized window
+    reports `AXDialog`, which the first draft would have quit);
+  - plus windows SkyLight places only on Spaces that aren't visible.
+- **Slack fires `AXUIElementDestroyed`** on the red X and ⌘W (macOS 27.2). The 2026-11-05
+  research said it wouldn't. So there's no click capture. Slack keeps its hidden window on its
+  Space, so the window is marked closed at the moment of the close.
+- **Edge-triggered only:** it acts on a close it sees, never on an app that is already
+  windowless.
+- **Settings in `rules.json` version 2:** `quitOnLastWindow` plus an `apps` table that slice 3
+  extends. `neverQuit` blocks every kind of Swapless quit, later ones included. A v1 file still
+  reads, and any menu write produces v2. Matching is by bundle id.
+- **No `history.sqlite` schema change:** a quit is an `actions` row, rule id
+  `quit-on-last-window`.
+- **During rig runs** a prefix seam limits quits to the rig's own off-screen `LSUIElement` test
+  apps.
+
+**Open:** Stage Manager isn't supported; the feature pauses while it's on. Supporting it is a
+later call.
+
+**Implementation run (2026-11-06), stopped at check 9 by a spec brake:**
+- **Mandatory trigger: a settled rule was overridden in practice. A test window was on the
+  owner's screen.**
+  - During `./scripts/leak-rig.sh --only 9` (started 12:02:44 local), the `panel-left` test
+    app's floating `NSPanel` was on a display at (640, 1216), 300×224 pt, for about 10 s. That
+    ran from its launch until the rig's cleanup ended it (the app's own `exit` first, then
+    SIGTERM).
+  - Check 9's visibility gate caught it and stopped the check before any scenario was driven.
+    No app was quit, and nothing of the owner's was touched.
+  - The P3 probe had launched the same panel once, on its own, and it stayed off-screen. Why it
+    didn't this time is **not established**. The hypothesis is that AppKit or the window server
+    moves a floating utility panel that sits entirely off every display back onto one. Testing
+    that means putting it on screen again, so it wasn't tested.
+  - Per the brakes, the run stopped there: no further rig runs, and nothing launched.
+- **P3 feasibility** (a scratch probe, not committed):
+  - (a) the test window intersected no display;
+  - (b) AX listed it as `AXStandardWindow` with a readable id;
+  - (c) it sat on the visible Space 6;
+  - (d) an AX press on the close button fired `AXUIElementDestroyed` for an app that was never
+    active;
+  - (f) `terminate()` quit it in 0.08 s with no consent prompt;
+  - (e) **failed as written**, so the spec named the wrong API:
+    - NSWorkspace never posts `didLaunch`/`didTerminate` for `LSUIElement` apps (none arrived,
+      with or without AppKit initialized);
+    - KVO on `NSWorkspace.runningApplications` delivers both events in a bare `CFRunLoopRun()`
+      process;
+    - the watcher uses that KVO for real apps and test apps alike, which is a reading of the
+      spec's intent.
+- **Measured once, by hand** (a headless release engine, `"rules": []`, the rig prefix, one
+  `close-ax` test app):
+  - a `performClose` → the quit decision 5.69 s later, through `applicationShouldTerminate`;
+  - `before_mb` 83.5 (64 MiB ballast), outcome `ok`, `cpuMs` 26.6.
+- **A rig defect, not fixed yet:** in the rig process, `NSRunningApplication.isTerminated`
+  apparently never updated. The rig registers no NSWorkspace observer, which is the likely
+  cause. So every test app looked as if it ignored `exit` and got SIGTERM at cleanup (they were
+  all the rig's own apps).
+- **Where the branch stands:**
+  - P1 and P2 are done.
+  - P4's watcher, engine wiring, test app and check 9 are written.
+  - P5's Activity and menu rows are written.
+  - `swift build` passes, and `swift test` passes: 207 core tests and 8 app tests.
+  - Not done:
+    - check 9 passing;
+    - P5's new menu tests;
+    - check 5c;
+    - the whole-slice gate;
+    - the proofs.
+- **Decided (owner, 2026-11-06, after the stop): drop the panels and add a self-guard.**
+  - The unattended rig no longer launches any `NSPanel`. `panel-left` and `dialog-left` leave
+    check 9 and the test app.
+  - What they covered (a floating panel doesn't keep an app alive; a visible dialog does) stays
+    covered by `WindowVerdictTests` and the owner's acceptance. P3 measured the subroles once:
+    `AXFloatingWindow` and `AXDialog`.
+  - Only ordinary off-screen `NSWindow`s remain; none touched a display in any run.
+  - **The self-guard:** the test app checks its own windows (AppKit frame and window-server
+    bounds) right after every show and every 200 ms. If one touches a display, it orders every
+    window out at once and writes a `guard` status line, which check 9 treats as the visibility
+    gate's FAIL and stop.
+  - This limits a repeat to a flash under ~200 ms, not zero. The rig's gate stays as it was.
+
+**Implementation run, continued (2026-11-06): stopped a second time by a spec brake.** This
+is a mandatory trigger, because a check FAILs in the final report. The proofs are in
+`docs/proof/v1-quit-on-close/`.
+- **Check 9 passed 13/13 twice** without panels (`rig-only-9-pass.txt`, and inside
+  `--budget`).
+  - Every ok quit landed 5.6–5.8 s after the close, with `before_mb` within 3 % of the app's
+    own footprint.
+  - `swap` was cancelled (`cancelled-window`). `never-quit`, `young`, `option-off` and
+    `windowless` didn't quit.
+  - `refuse` was refused at 30 s, left alone for 15 s, then quit again after a new window.
+  - Dry run: no terminate, and one dry-run row.
+  - Today counted 6 quits, with freed equal to the sum of `before_mb`, and a relaunch read
+    them back.
+  - `cpuMs` max was 15.6 and 23.2 (the limit is 150).
+  - The self-guard never tripped.
+  - One earlier run missed `close-menu` once (no decision, cause unknown); it passed in every
+    run since.
+- **Check 5 and 5c:**
+  - The first `--budget` measured the installed app's window at **0.277 %**, over the limit.
+    Its own `self` lines show the cost only while that stretch of the rig ran: 0.25, 0.23 and
+    0.33 % per 5 min, then 0.10 % and 0.12 % right after. The previous build idles at
+    0.09–0.18 % all day.
+  - With the one focused attempt the brakes allow (a fix to 5c's footprint read, then
+    `--budget` again), **check 5 passed at 0.107 %** (21.0 MiB, the same as the last slice).
+  - **5c passed:** option on, 13 apps tracked, **0.110 %** CPU, 7.2 MiB, peak 9.3 MiB.
+  - The 0.277 % stays unexplained. The installed app runs with the option off, so it has no
+    observers.
+- **What stopped it:** in that `--budget` run, check 2 hit its memory floor (free 36–41 %,
+  the helper refused by design; it passed later at 49 %). Check 9 then failed its
+  visibility-gate AX read twice, on `close-ax` and then `option-off`. That app's AX window
+  list stayed a single element with id 0 and no subrole for more than 10 s. It hit 1 app in
+  13, in the two runs made under memory load; it hit none in the three runs before.
+  - The product is safe on such an app: the gate returns `no-window-id` and never quits it.
+  - The rig's gate can't tell that from a broken test, so it fails, as written.
+  - The focused attempt was spent, so the brake applied: report, no more reruns.
+- **Not done:**
+  - one clean `--budget` run, including check 9's AX condition;
+  - the PR's acceptance checklist on the real screen (the owner's).
+- **Decided (owner, 2026-11-06): relaunch that app once.** If a test app's AX list stays
+  unreadable for 10 s, check 9 ends that instance (its own `exit`, SIGTERM after 5 s), launches
+  a fresh one and checks again for 10 s. A second failure still FAILs. Then one clean
+  `--budget` run.
+
+**That `--budget` run (13:54 local): stopped a third time. A mandatory trigger: test windows
+were seen on the owner's screen.** Report: `docs/proof/v1-quit-on-close/rig-budget-mission-control.txt`.
+- **Everything else passed:**
+  - `swift test` 217 + 8;
+  - checks 1–4;
+  - check 5: idle **0.093 %**, 21.0 MiB, peak 22.1 MiB;
+  - 5c: option on, 14 apps, **0.100 %**, 7.5 MiB, peak 10.0 MiB.
+- **Check 9's gate fired after its first pass.** Four test apps' own windows were on a
+  display: `two-windows`, `swap`, `option-off`, `tabs`. Each showed at about 46 % scale (800×632
+  shown as 371×294) at x ≈ 2,600–2,940. The visible Spaces had changed from [6, 1379, 1382] to
+  [6, 1382, 1478].
+- **Most likely Mission Control or App Exposé** (inferred, not measured): it draws every window
+  of the Space as a thumbnail on screen, and windows parked 20,000 pt off the edge too.
+- The self-guard ordered them out within ~200 ms, and the gate stopped the check. No app was
+  quit.
+- **So off-screen placement can't hide a window from Mission Control.** That is a limit of
+  the design, so the run stopped there.
+- **Decided (owner, 2026-11-06): check 9 runs only with the owner present.**
+  - It leaves the unattended done-gate: the bare run is checks 1–4 again, and `--budget` is
+    1–5 with 5c.
+  - It runs through its own flag, `./scripts/leak-rig.sh --quit-on-close`, in an announced
+    ~4-min session.
+  - `--only` no longer accepts 9.
+  - Check 9 had already passed 13/13 twice: the 12:23 `--only 9` run and the 12:27
+    `--budget` run.
+
+**The whole-slice gate without check 9 (15:15 local): stopped by the budget brake.** This is
+a mandatory trigger, because a check FAILs in the final report. Report:
+`docs/proof/v1-quit-on-close/rig-budget-final.txt`.
+- **Passed:**
+  - `swift test` 217 + 8;
+  - checks 1–4;
+  - 5c: option on, 13 apps, **0.168 %**, 7.5 MiB, peak 10.2 MiB;
+  - the peak, offscreen-draw and menu-open tests: menu-open 0.444 %, tail 0.064 %.
+- **Failed:** check 5's installed-app window, **0.231 % > 0.2 %** (the new build, option off,
+  no observers).
+- **Four `--budget` windows today:** 0.277, 0.107, 0.093, 0.231 %.
+  - In this run the installed app's own `self` lines read 0.21, 0.25, 0.29, 0.17 and 0.21 %
+    per 5 min while the rig ran (727 processes).
+  - After the first failing run the same build settled at 0.10–0.12 % once the rig stopped.
+  - The previous build read 0.09–0.18 % all day, and 0.224 % (`cpuPct10m`) once at 10:32.
+- **Open, and not decided by the run:** whether this slice raised idle cost, or the rig's own
+  load (and the Mac's) pushes the window over. The focused attempt was spent, and the limit
+  wasn't loosened.
+- **Suggested way to tell:** the owner's day of use with the self-signed build (acceptance
+  item 10), compared with the previous build's 0.09–0.18 %.
+
+**Check 9 with the owner present (18:23 local): PASS 13/13**, 6 ok quits, each 5.66–5.70 s
+after the close. Activity counted 6 quits and 523.3 MB freed (the sum of `before_mb`). Decision
+CPU: p50 5.3 ms, max 22.7 ms. Proof: `docs/proof/v1-quit-on-close/rig-quit-on-close-owner-present.txt`.
+
+**Decided (owner, 2026-11-06): the 0.231 % reading was rig load, not this slice.**
+- **The evidence:** the owner measured the installed build (this slice, ad hoc signature) from
+  outside, with the option off: **0.123 % of a core over 600 s**. That window included ~3 min of
+  the check 9 run at its end. It is in line with the earlier builds' 0.09–0.18 %.
+- **The limit stays at 0.2 %.** Nothing is loosened.
+- **Confirmation:** acceptance item 10, a day of use on the re-signed build.
+- **No investigation** of the idle cost.
+
+**Acceptance, Accessibility grant (2026-11-06, found while the owner ran item 3):** the switch
+was on but `AXIsProcessTrusted()` stayed false, and removing the entry with − and adding it back
+with + didn't help. tccd's log read "Failed to match existing code requirement … status -67050".
+The stored requirement was `cdhash H"d20f0797…"`, from an earlier ad hoc build, while the
+installed self-signed build is `990265f3…`. An entry first created by an ad hoc build is pinned
+to that one binary's cdhash. **Fix:** `tccutil reset Accessibility com.michaelv.swapless` (no
+admin prompt), then grant it again. The new entry follows the certificate, so it survives
+rebuilds. At 20:54:14 the watcher logged `trusted=true` and tracked 12 apps.
+
+**Acceptance (owner, 2026-11-07/08):**
+- **Passed:** items 1–6, 8 and 9. Notes and Slack quit about 5 s after their last window
+  closed, a minimized window didn't quit, and Today showed `3 quits · 1.2 GB freed`.
+- **Item 7 (two Spaces):** not run by hand. It's covered by the unit tests, and the live log
+  counted `elsewhere=1`.
+- **Item 10 failed the CPU limit.** Over the day (10:19–18:09), menu closed: **0.365 %**. Quiet
+  stretches read 0.11–0.12 %, with bursts of 1–2.2 % during heavy use. Peak footprint 51.9 MB.
+- **A 30 s profile under load:** 1.2 s CPU. WindowServer events (NSEventThread) took ~37 %, the
+  v1 sampler ~16 %, the main thread ~17 %, and the quit watcher ~7 %.
+- **A/B with the option off (18:41–19:49): 1.94 %**, with bursts of 3–3.8 %.
+  - The quit watcher thread used 0.5 s; the main thread +56 s, the NSEventThread +33 s.
+  - For comparison, TypeFlow's NSEventThread used 34 s in 6.6 days, Swapless's 222 s in 2 days.
+- **Conclusion:** the quit logic isn't the cost. Something in the app (v1, or this slice's
+  always-on observers: Space and display callbacks, KVO on `runningApplications`, SkyLight calls)
+  draws heavy WindowServer event traffic under load.
+
+**Decided (owner, 2026-11-08): ship `v1-quit-on-close` with that cost as a known issue.**
+- **Why:** the owner feels the Mac better since heavy work moved to the Linux host, and doesn't
+  feel Swapless. Holding back quit-on-close wouldn't fix a cost that is the same with the option
+  off.
+- **The 0.2 % budget stays the goal.**
+- **Follow-up task:** find why Swapless's NSEventThread and main thread wake under load, and fix
+  it. Start with a deadline-bound, read-only auto-capture (`sample` when the app exceeds 1 %),
+  and an A/B against the v1 observers.
+- `self-report.sh` now filters by pid. On macOS 27, logd records the build product's path, so
+  the old path filter matched nothing.
+
 ## 2026-11-06 · v1-menu-today: the footer measures idle CPU, the open menu refreshes every 5 s, and a "Today" row
 
 **Decided (owner, in the `/wingman` session for `specs/v1-menu-today.md`):**

@@ -1,0 +1,10 @@
+swapless-rig · mode only-2,9 · checks 2,9 · 2026-11-06 19:28:37 +0000
+debug-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Debug · release-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Release
+preflight: PASS free 49 % · wallpaper baseline [33605@1793968875.101779, 33607@1793968875.395420]
+  check 2: grower flagged 3.5 s after crossing 200 MB, slope 28819 MB/h (reason slope)
+  check 2: flat flags 0 · sawtooth flags 0 · all flags 1
+check 2 growth-flagged: PASS grower flagged 3.5 s after crossing 200 MB, slope 28819 MB/h (reason slope) · flat flags 0 · sawtooth flags 0 · all flags 1
+  check 9: walls ok (no force quit anywhere; one .terminate() in QuitSender.swift)
+  check 9: engines up, trusted and available (live tracks 13 apps, read-only)
+check 9 quit-on-last-window-close: FAIL option-off: no AXStandardWindow of [44976] in its AX list (["0 -"]); TIMEOUT: check 9: option-off AX list not ready in 10 s
+rig: FAIL · 1 failed · 0 skipped · report ~/Desktop/Projects/Personal/Swapless/.build/rig/rig-20261106-132837-only-2-9.txt

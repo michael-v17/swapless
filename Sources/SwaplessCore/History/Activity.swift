@@ -1,8 +1,10 @@
 import Foundation
 
-/// What Swapless did, by kind (v1-menu-today S3, T8). `v1-quit-on-close` adds `.quit`.
+/// What Swapless did, by kind (v1-menu-today S3, T8; v1-quit-on-close T10). The order is the
+/// menu's: restarts, then quits.
 public enum ActivityKind: String, CaseIterable, Sendable {
     case restart
+    case quit
 }
 
 public struct ActivityCounts: Sendable, Equatable {
@@ -60,9 +62,11 @@ public struct ActivitySummary: Sendable, Equatable {
         self.total = total
     }
 
+    /// v1-quit-on-close T10: the quit rule id first (whatever the target, a bundle id), then
     /// T8: `wallpaper` and the rig's DEBUG stand-in `rig-helper` are restarts; anything else
     /// isn't counted.
     public static func kind(of row: ActionRow) -> ActivityKind? {
+        if row.ruleId == QuitDisplay.ruleId { return .quit }
         switch row.target {
         case "wallpaper", "rig-helper": return .restart
         default: return nil
@@ -72,6 +76,10 @@ public struct ActivitySummary: Sendable, Equatable {
     /// T10: before − after for the extension, plus before − after for WindowServer when both
     /// are known. Signed. nil when nothing was measured.
     public static func freedMB(of row: ActionRow) -> Double? {
+        if kind(of: row) == .quit {
+            // T10: an `ok` quit frees the app's footprint at quit time.
+            return row.outcome == "ok" && row.beforeMB > 0 ? row.beforeMB : nil
+        }
         guard freedOutcomes.contains(row.outcome), let after = row.afterMB, row.beforeMB > 0 else { return nil }
         var v = row.beforeMB - after
         if let wb = row.wsBeforeMB, let wa = row.wsAfterMB { v += wb - wa }
@@ -114,6 +122,8 @@ public struct ActivitySummary: Sendable, Equatable {
         for row in actions where !row.dryRun {
             guard let k = kind(of: row),
                   let i = ranges.firstIndex(where: { row.ts >= $0.start && row.ts < $0.end }) else { continue }
+            // T10: a quit counts only when the app did quit (`refused` isn't a failure either).
+            if k == .quit && row.outcome != "ok" { continue }
             counts[i].byKind[k, default: 0] += 1
             if failedOutcomes.contains(row.outcome) { counts[i].failed += 1 }
             if let f = freedMB(of: row) { counts[i].freedMB = (counts[i].freedMB ?? 0) + f }
@@ -143,7 +153,8 @@ public enum ActivityState: Sendable, Equatable {
     /// The headless `activity` line's body (everything but `type` and `t`).
     public var jsonFields: [(String, JSON)] {
         func countsJSON(_ c: ActivityCounts) -> [(String, JSON)] {
-            [("restarts", .i(c.count(.restart))), ("failed", .i(c.failed)), ("freedMB", .opt(c.freedMB))]
+            [("restarts", .i(c.count(.restart))), ("quits", .i(c.count(.quit))), ("failed", .i(c.failed)),
+             ("freedMB", .opt(c.freedMB))]
         }
         switch self {
         case .notRecorded(let reason):

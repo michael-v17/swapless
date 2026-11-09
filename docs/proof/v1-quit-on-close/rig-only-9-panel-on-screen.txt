@@ -1,0 +1,22 @@
+swapless-rig · mode only-9 · checks 9 · 2026-11-06 18:02:44 +0000
+debug-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Debug · release-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Release
+preflight: PASS free 46 % · wallpaper baseline [33605@1793968875.101779, 33607@1793968875.395420]
+  check 9: walls ok (no force quit anywhere; one .terminate() in QuitSender.swift)
+  check 9: engines up, trusted and available (live tracks 12 apps, read-only)
+  check 9: swap (pid 63841) still running after exit; SIGTERM
+  check 9: helpers (pid 63828) still running after exit; SIGTERM
+  check 9: hide-on-close (pid 63831) still running after exit; SIGTERM
+  check 9: windowless (pid 63848) still running after exit; SIGTERM
+  check 9: panel-left (pid 63837) still running after exit; SIGTERM
+  check 9: never-quit (pid 63833) still running after exit; SIGTERM
+  check 9: two-windows (pid 63845) still running after exit; SIGTERM
+  check 9: close-menu (pid 63817) still running after exit; SIGTERM
+  check 9: tabs (pid 63843) still running after exit; SIGTERM
+  check 9: dialog-left (pid 63822) still running after exit; SIGTERM
+  check 9: refuse (pid 63839) still running after exit; SIGTERM
+  check 9: option-off (pid 63835) still running after exit; SIGTERM
+  check 9: young (pid 63850) still running after exit; SIGTERM
+  check 9: dry-run (pid 63826) still running after exit; SIGTERM
+  check 9: close-ax (pid 63808) still running after exit; SIGTERM
+check 9 quit-on-last-window-close: FAIL test window on a display: ["panel-left: window 44199 at (640.0, 1216.0, 300.0, 224.0)"]
+rig: FAIL · 1 failed · 0 skipped · report ~/Desktop/Projects/Personal/Swapless/.build/rig/rig-20261106-120244-only-9.txt

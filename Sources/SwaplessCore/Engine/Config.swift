@@ -60,6 +60,9 @@ public struct Config: Sendable {
     /// A release build saw `SWAPLESS_RIG_HELPER_PATH` and ignored it (one log line).
     public var rigHelperIgnored: Bool
     public var duration: Double?
+    /// `SWAPLESS_RIG_QUIT_BUNDLE_PREFIX` (v1-quit-on-close S6): quits only for bundle ids with
+    /// this prefix, which are admitted even when not `.regular`. Release and debug alike.
+    public var rigQuitBundlePrefix: String?
     public var flavour: Flavour
     /// As injected by `main.swift` (never computed here).
     public var defaultStateDir: URL
@@ -205,6 +208,15 @@ public struct Config: Sendable {
             detectorPath = raw
         }
 
+        var rigQuitPrefix: String?
+        if let raw = env["SWAPLESS_RIG_QUIT_BUNDLE_PREFIX"] {
+            guard raw.hasPrefix(QuitGate.rigPrefixRoot), raw.count > QuitGate.rigPrefixRoot.count else {
+                return .failure(ConfigError("SWAPLESS_RIG_QUIT_BUNDLE_PREFIX",
+                                            "must start with '\(QuitGate.rigPrefixRoot)' and name more than it, got '\(raw)'"))
+            }
+            rigQuitPrefix = raw
+        }
+
         if let duration, !(duration.isFinite && duration > 0) {
             return .failure(ConfigError("--duration", "must be a positive number of seconds"))
         }
@@ -215,7 +227,7 @@ public struct Config: Sendable {
             detectorConfigPath: detectorPath, forceTop: forceTop, rigMenuCycles: cycles,
             rigMenuShows: shows, rigMenuDraws: draws, rigMenuOpen: menuOpen,
             rigHelperPath: helperPath, rigHelperIgnored: helperIgnored, duration: duration,
-            flavour: flavour, defaultStateDir: defaultStateDir))
+            rigQuitBundlePrefix: rigQuitPrefix, flavour: flavour, defaultStateDir: defaultStateDir))
     }
 
     /// The code allowlist this binary knows (§ I).

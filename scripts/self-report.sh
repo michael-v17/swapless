@@ -17,7 +17,7 @@ set -euo pipefail
 export LC_ALL=C
 
 INSTALLED="/Applications/Swapless.app/Contents/MacOS/Swapless"
-PREDICATE='subsystem == "com.michaelv.swapless" AND category == "self" AND processImagePath == "/Applications/Swapless.app/Contents/MacOS/Swapless"'
+BASE='subsystem == "com.michaelv.swapless" AND category == "self"'
 
 SINCE=""
 while [ $# -gt 0 ]; do
@@ -34,9 +34,20 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+# Only the executable path is compared; no args or env of any process are read.
+pid="$(ps -axo pid=,comm= | awk -v p="$INSTALLED" '$2 == p && !f { print $1; f = 1 }')"
+# The log can't be filtered by the installed path: logd resolves the image by its UUID and
+# records the build product's path (`.build/out/Products/Release/Swapless`, found 2026-11-07).
+# So filter by the running installed app's pid; with none running, every `Swapless` process
+# (dev and rig runs included) matches.
+if [ -n "$pid" ]; then
+    PREDICATE="$BASE AND processID == $pid"
+else
+    PREDICATE="$BASE AND process == \"Swapless\""
+    echo "self-report: the installed app isn't running; matching every Swapless process" >&2
+fi
+
 if [ -z "$SINCE" ]; then
-    # Only the executable path is compared; no args or env of any process are read.
-    pid="$(ps -axo pid=,comm= | awk -v p="$INSTALLED" '$2 == p && !f { print $1; f = 1 }')"
     if [ -n "$pid" ]; then
         lstart="$(ps -o lstart= -p "$pid" | sed 's/^ *//; s/  */ /g')"
         SINCE="$(date -j -f '%a %b %d %T %Y' "$lstart" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || true)"

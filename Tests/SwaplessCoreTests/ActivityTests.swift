@@ -142,8 +142,8 @@ struct ActivityTests {
     @Test func activityLineFields() {
         let s = sum([actionRow(ts: now - 60, before: 1000, after: 1100, outcome: "no-improvement")], sampleDays: ["2026-11-05"])
         let j = JSON.object(ActivityState.summary(s).jsonFields).serialized
-        #expect(j.hasPrefix(#"{"recorded":true,"reason":null,"days":[{"day":"2026-11-06","running":true,"restarts":1,"failed":1,"freedMB":-100},{"day":"2026-11-05","running":true,"restarts":0,"failed":0,"freedMB":null}"#))
-        #expect(j.hasSuffix(#""total":{"restarts":1,"failed":1,"freedMB":-100}}"#))
+        #expect(j.hasPrefix(#"{"recorded":true,"reason":null,"days":[{"day":"2026-11-06","running":true,"restarts":1,"quits":0,"failed":1,"freedMB":-100},{"day":"2026-11-05","running":true,"restarts":0,"quits":0,"failed":0,"freedMB":null}"#))
+        #expect(j.hasSuffix(#""total":{"restarts":1,"quits":0,"failed":1,"freedMB":-100}}"#))
         let off = JSON.object(ActivityState.notRecorded(reason: "history off").jsonFields).serialized
         #expect(off == #"{"recorded":false,"reason":"history off","days":[],"total":null}"#)
     }

@@ -81,6 +81,8 @@ enum Check5 {
 
     static func run(_ rig: Rig) -> Outcome {
         let checkStart = now()
+        // 5c runs beside the installed-app window, so --budget grows by about a minute.
+        let c5c = Check5c.begin(rig)
         let (pidOpt, why) = installedApp(rig)
         var outcome: Outcome
         if let why {
@@ -110,7 +112,9 @@ enum Check5 {
             }
         }
         // The peak test and the (offscreen) menu test run whatever happened above.
-        return combine([outcome, peakTest(rig), menuTest(rig), menuOpenTest(rig)])
+        let c = c5c.finish(rig)
+        rig.report.result("  check 5c budget-with-quit-on-close", c)
+        return combine([outcome, c, peakTest(rig), menuTest(rig), menuOpenTest(rig)])
     }
 
     /// Any fail fails (all reasons kept); else any skip skips; else pass.
@@ -448,5 +452,105 @@ enum Check5 {
         } catch {
             return .fail("peak test: \(error)")
         }
+    }
+}
+
+
+/// Check 5c (v1-quit-on-close S6): the budget with quit on last window close on. A release
+/// headless engine, its own state dir with `"rules": []` (no restart rule) and the switch on, the
+/// rig prefix set (it can't quit anything of the owner's), no test apps. CPU from `ps` between
+/// 60 s and 660 s after launch (the first minute: self-check, first enumeration, observers, is
+/// reported, not judged), ≤ 0.2 % of a core (0.6 % in top mode); footprint ≤ 30 MiB at the end,
+/// peak ≤ 45 MiB; a `quitStatus` line with tracked ≥ 1 within 30 s.
+final class Check5c: @unchecked Sendable {
+    let started: Double
+    private let lock = NSLock()
+    private var engine: Rig.EngineRun?
+    private var startError: String?
+    private var ps60: Double?
+    private var ps660: Double?
+    /// footprint(1) at 660 s, while the engine is certainly running.
+    private var fp660: (phys: UInt64, peak: UInt64)?
+    private var done = false
+    private var notes: [String] = []
+
+    static let warmup = 60.0
+    static let window = 600.0
+
+    private init() { started = now() }
+
+    static func begin(_ rig: Rig) -> Check5c {
+        let c = Check5c()
+        do {
+            let dir = try rig.tempStateDir(rules: #"{"version":2,"rules":[],"quitOnLastWindow":{"enabled":true},"apps":[]}"#)
+            c.engine = try rig.startEngine(name: "c5c-engine", release: true, stateDir: dir,
+                                           env: ["SWAPLESS_RIG_QUIT_BUNDLE_PREFIX": Check9.livePrefix],
+                                           duration: 3600, expectDryRun: false)
+        } catch let e as CheckFailure {
+            c.startError = e.why
+            return c
+        } catch {
+            c.startError = "\(error)"
+            return c
+        }
+        let pid = c.engine!.child.pid
+        DispatchQueue.global().async {
+            Thread.sleep(forTimeInterval: max(0, c.started + warmup - now()))
+            let a = rig.psTime(pid: pid)
+            Thread.sleep(forTimeInterval: max(0, c.started + warmup + window - now()))
+            let b = rig.psTime(pid: pid)
+            let f = rig.footprintTool(pid: pid)
+            c.lock.lock()
+            c.ps60 = a
+            c.ps660 = b
+            c.fp660 = f
+            c.done = true
+            c.lock.unlock()
+        }
+        return c
+    }
+
+    func finish(_ rig: Rig) -> Outcome {
+        if let startError { return .fail("5c: engine didn't start: \(startError)") }
+        guard let e = engine else { return .fail("5c: no engine") }
+        var problems: [String] = []
+        let tracked = e.child.events("quitStatus").map(\.obj).first { ($0["tracked"] as? Int ?? 0) >= 1 }
+        let firstStatusT = e.child.events("quitStatus").first?.t
+        if tracked == nil || (firstStatusT.map { $0 - started > 30 } ?? true) {
+            problems.append("no quitStatus with tracked ≥ 1 within 30 s")
+        }
+        let deadline = started + Self.warmup + Self.window + 60
+        while now() < deadline {
+            lock.lock()
+            let d = done
+            lock.unlock()
+            if d { break }
+            Thread.sleep(forTimeInterval: 1)
+        }
+        lock.lock()
+        let a = ps60, b = ps660, d = done, fpt = fp660
+        lock.unlock()
+        guard d else {
+            Timeouts.shared.record("5c: the ps window never finished")
+            return .fail("5c: the ps window never finished")
+        }
+        let topMode = (e.start["source"] as? String) == "top"
+        let limit = topMode ? 0.6 : 0.2
+        e.child.stop()
+        guard let a, let b else { return .fail("5c: ps time unavailable") }
+        let pct = (b - a) / Self.window * 100
+        let fp = fpt.map { Double($0.phys) / MiB }
+        let peak = fpt.map { Double($0.peak) / MiB }
+        rig.report.line(String(format: "  check 5c: quit-on-close on, tracking %@ apps · CPU %.3f %% over %.0f s (limit %.1f, %@ mode; warm-up %.1f s CPU) · footprint %@ · peak %@",
+                               "\(tracked?["tracked"] ?? "?")", pct, Self.window, limit, topMode ? "top" : "coalition", a,
+                               fp.map { String(format: "%.1f MiB", $0) } ?? "?", peak.map { String(format: "%.1f MiB", $0) } ?? "?"))
+        if pct > limit { problems.append(String(format: "CPU %.3f %% > %.1f %%", pct, limit)) }
+        if let fp, fp > Check5.idleBeforeMenuMiB { problems.append(String(format: "footprint %.1f MiB > %.0f", fp, Check5.idleBeforeMenuMiB)) }
+        if let peak, peak > Check5.peakMiB { problems.append(String(format: "peak %.1f MiB > %.0f", peak, Check5.peakMiB)) }
+        if fpt == nil { problems.append("footprint(1) failed") }
+        let scope = e.child.events("action").count
+        if scope != 0 { problems.append("\(scope) action(s) (expected none)") }
+        return problems.isEmpty ? .pass(String(format: "CPU %.3f %%, footprint %.1f MiB, peak %.1f MiB", pct, fp ?? 0, peak ?? 0))
+            : .fail("5c: " + problems.joined(separator: "; "))
     }
 }

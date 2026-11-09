@@ -1,0 +1,25 @@
+swapless-rig · mode quit-on-close · checks 9 · 2026-11-07 00:23:22 +0000
+debug-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Debug · release-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Release
+preflight: PASS free 63 % · wallpaper baseline [62008@1794007301.385426, 62009@1794007301.705105]
+rig: check 9 launches off-screen test apps for ~4 min; Mission Control would show them (announced session only)
+  check 9: walls ok (no force quit anywhere; one .terminate() in QuitSender.swift)
+  check 9: engines up, trusted and available (live tracks 15 apps, read-only)
+  check 9: visibility gate ok (13 apps, every window off every display, on visible Space [6, 1382, 1723])
+  check 9 · close-ax: PASS quit 5.68 s after the close, outcome ok, before_mb 84.2 (footprint 81.7)
+  check 9 · close-menu: PASS quit 5.70 s after the close, outcome ok, before_mb 84.0 (footprint 81.5)
+  check 9 · hide-on-close: PASS quit 5.69 s after the close, outcome ok, before_mb 84.4 (footprint 81.8)
+  check 9 · helpers: PASS quit 5.70 s after the close, outcome ok, before_mb 96.2 (footprint 93.7)
+  check 9 · two-windows: PASS quit 5.68 s after the close, outcome ok, before_mb 84.5 (footprint 82.4)
+  check 9 · swap: PASS no quit; decisions ["cancelled-window"]
+  check 9 · tabs: PASS quit 5.66 s after the close, outcome ok, before_mb 90.0 (footprint 87.9)
+  check 9 · refuse: PASS refused at 30 s, left alone 15 s, re-armed by a new window (2 terminates)
+  check 9 · never-quit: PASS no quit; decisions ["never-quit"]
+  check 9 · young: PASS no quit; decisions ["young"]
+  check 9 · windowless: PASS no quit; decisions []
+  check 9 · option-off: PASS no quit; decisions []
+  check 9 · dry-run: PASS no terminate, a dry-run row, Today quits 0
+  check 9: activity today quits 6 (ok quits 6), freedMB 523.3 (sum before_mb 523.3)
+  check 9: cpuMs over 25 decisions: p50 5.3 · p95 20.0 · max 22.7 (limit 150)
+  check 9: relaunch reads today quits 6
+check 9 quit-on-last-window-close: PASS 13 of 13 scenarios pass, 6 ok quits
+rig: PASS · 0 failed · 0 skipped · report ~/Desktop/Projects/Personal/Swapless/.build/rig/rig-20261106-182322-quit-on-close.txt
