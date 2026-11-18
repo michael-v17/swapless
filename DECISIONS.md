@@ -16,6 +16,30 @@ the owner if it's wrong?":
 `/ship-task` step 3 checks these on every shipment. Discretionary entries stay welcome —
 the triggers are a floor, not a ceiling.
 
+## 2026-11-17 · Before going public: the tagline, the Safari claim, and what "freed" counts
+
+**Tagline (owner, 2026-11-17):** "The menu-bar app that names what pushes a 16 GB Mac into swap —
+and fixes it on your rules." It replaces "keeps a 16 GB Mac out of swap". The menu's `Swap` field
+is swap *used*, which piles up over uptime and rarely shrinks, so a hero showing `Swap 4.1 GB`
+contradicted the old promise. The live signal is `Swap-in`. The README, the GitHub repo
+description and the profile use the same sentence.
+
+**Safari (owner, 2026-11-17):** the claim reads "Safari's web-content processes", not "Safari
+tabs". The Safari submenu lists `Web Content (pid N)` rows, and one WebKit content process can
+host several tabs of a site. Showing tab titles in the submenu is a future roadmap item, not v1.
+
+**"Freed", as the code computes it** (`ActivitySummary.freedMB`, the Today row and its 7-day
+total): the signed sum of
+- each wallpaper restart whose outcome is `ok` or `no-improvement`: the extension's footprint at
+  the sample that fired the rule, minus the respawned extension's footprint 60 s after it came
+  back, plus WindowServer's before − after when both were read;
+- each quit whose outcome is `ok`: the app's group footprint (the app plus its helper processes,
+  as the menu groups them), read by a fresh sweep just before Swapless sends the app's own Quit.
+
+Dry runs, refused quits and restarts that failed (`agent-missing`, `extension-missing`) add
+nothing. A quit is gross: an app reopened later isn't subtracted. A restart is already net of
+the extension that comes back. The menu floors the total at 0.
+
 ## 2026-11-06 · v1-quit-on-close: the slice order changes, and how it fires where MagicQuit didn't
 
 **Slice order (owner, 2026-11-05, revised 2026-11-06):** quit on last window close (the old slice
