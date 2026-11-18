@@ -1,0 +1,49 @@
+swapless-rig · mode budget · checks 1,2,3,4,5 · 2026-11-18 03:39:45 +0000
+debug-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Debug · release-bin ~/Desktop/Projects/Personal/Swapless/.build/out/Products/Release
+preflight: PASS free 52 % · wallpaper baseline [14641@1794955765.803630, 14675@1794955766.249608]
+  check 1 [coalition-mode] source=coalition selfCheck=pass checked=10 passed=10 windowServer=pass
+  check 1 [coalition-mode] T0=1794973186.351 T1=1794973186.730 before.t=1794973186.213 after.t=1794973188.411
+  check 1 [coalition-mode] helper top=258.0 MiB engine=257.8 MiB/257.8 MiB ok
+  check 1 [coalition-mode] helper footprint(1)=257.8 MiB vs after 257.8 MiB Δ=0.0 MiB
+  check 1 [coalition-mode] WallpaperImageExtension top=137.0 MiB engine=136.9 MiB/136.9 MiB ok
+  check 1 [coalition-mode] WindowServer group (1 members) Σtop=1907.0 MiB engine=1907.6 MiB/1871.2 MiB tol=20.1 MiB ok
+  check 1 [coalition-mode] broad 56/56 same-user ≥ 50 MB within tol (100.0 %)
+  check 1 [coalition-mode] coverage: top 745 pids, sample 742 members, 2 gone/new, 0 missing
+  check 1 [top-mode] T0=1794973189.928 T1=1794973190.315 before.t=1794973189.854 after.t=1794973192.055
+  check 1 [top-mode] helper top=258.0 MiB engine=257.7 MiB/257.7 MiB ok
+  check 1 [top-mode] helper footprint(1)=257.7 MiB vs after 257.7 MiB Δ=0.0 MiB
+  check 1 [top-mode] WallpaperImageExtension top=137.0 MiB engine=136.9 MiB/136.9 MiB ok
+  check 1 [top-mode] WindowServer group (1 members) Σtop=1859.0 MiB engine=1859.0 MiB/1859.0 MiB tol=19.6 MiB ok
+  check 1 [top-mode] broad 56/56 same-user ≥ 50 MB within tol (100.0 %)
+  check 1 [top-mode] coverage: top 743 pids, sample 742 members, 0 gone/new, 0 missing
+check 1 footprint-matches-top: PASS both runs matched top
+  check 2: grower flagged 4.7 s after crossing 200 MB, slope 28817 MB/h (reason slope)
+  check 2: flat flags 0 · sawtooth flags 0 · all flags 1
+check 2 growth-flagged: PASS grower flagged 4.7 s after crossing 200 MB, slope 28817 MB/h (reason slope) · flat flags 0 · sawtooth flags 0 · all flags 1
+  check 3: check-2 run: 0 actions, markers [], helpers not exiting on their own []; wallpaper identities unchanged
+  check 3: (a) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (b) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (c) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (d) debug · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+  check 3: (e) release · 8 samples · 0 actions · marker no · helper exit 0 · wallpaper identities unchanged
+check 3 no-action-without-rule: PASS no action without a rule in 6 runs
+  check 4: 1 action(s), 1 outcome(s); A exit 143, B exit 0
+  check 4: a.marker 0.00 s after the action
+  check 4: decision cooldown after B's second sample above 200 MB
+  check 4: check-4 engine's last activity line: total.restarts 1
+  check 4: 4b (relaunch on check 4's state dir): recorded true, total.restarts 1, failed 0, freedMB null, 7 days, today running true
+  check 4: wallpaper dry run: 1 action(s), dryRun=1, outcome=dry-run, pids [14641, 14675] vs restart set [14641, 14675], 0 outcome line(s), identities unchanged 5 s later
+check 4 ruled-action-once: PASS 1 action(s), 1 outcome(s); A exit 143, B exit 0 · a.marker 0.00 s after the action · decision cooldown after B's second sample above 200 MB · check-4 engine's last activity line: total.restarts 1 · 4b (relaunch on check 4's state dir): recorded true, total.restarts 1, failed 0, freedMB null, 7 days, today running true · wallpaper dry run: 1 action(s), dryRun=1, outcome=dry-run, pids [14641, 14675] vs restart set [14641, 14675], 0 outcome line(s), identities unchanged 5 s later
+  check 5: installed Swapless pid 85291; CPU budget 0.2 % (coalition mode)
+  check 5: self line 1: cpuSeconds 3.625 (ps 3.63) footprint 33.6 MiB (footprint(1) 33.6 MiB) menuOpenSeconds 29.6
+  check 5: self line 2: cpuSeconds 4.116 (ps 4.12) footprint 32.5 MiB (footprint(1) 32.5 MiB) menuOpenSeconds 29.6
+  check 5: self line 3: cpuSeconds 4.708 (ps 4.71) footprint 32.1 MiB (footprint(1) 32.1 MiB) menuOpenSeconds 29.6
+  check 5: idle agreement: cpuPct10mIdle 0.177 vs window 0.180 (|Δ| 0.003 pp, limit 0.02)
+  check 5: window 600 s · CPU 0.180 % (Δps 1.08 s) · cpuPct10mIdle 0.177 vs window 0.180 (|Δ| 0.003 pp, limit 0.02) · top MEM 32.0 MiB (limit 40 MiB, menu used) · peak 34.5 MiB
+  check 5c: quit-on-close on, tracking 10 apps · CPU 0.140 % over 600 s (limit 0.2, coalition mode; warm-up 0.2 s CPU) · footprint 8.3 MiB · peak 11.1 MiB
+  check 5c budget-with-quit-on-close: PASS CPU 0.140 %, footprint 8.3 MiB, peak 11.1 MiB
+  check 5: peak test: 20 menu cycles, ri_lifetime_max_phys_footprint 12.9 MiB, exit 0
+  check 5: menu draw test (offscreen: no status item, window never ordered on screen): 50 draws, 7104 rows drawn, 0 visible; footprint before 10.9 MiB, 60 s after 14.8 MiB (for the record: offscreen doesn't reproduce the on-screen cost), peak 16.0 MiB (limit 45 MiB)
+  check 5: menu-open test: 60 s open, displaySweeps 12 (12–13), publishes 13 (≤ 14), refreshes 14 (≤ 14), compressedReadBatches 3 (== 3), submenusOpened 3, cpuSecondsOpen 0.202, cpuPercentOpen 0.337 % (≤ 1.0), tail 0.096 s = 0.080 % over 120 s (≤ 0.3), windows 0 (offscreen: the on-screen cost is the owner's acceptance)
+check 5 budget: PASS window 600 s · CPU 0.180 % (Δps 1.08 s) · cpuPct10mIdle 0.177 vs window 0.180 (|Δ| 0.003 pp, limit 0.02) · top MEM 32.0 MiB (limit 40 MiB, menu used) · peak 34.5 MiB · CPU 0.140 %, footprint 8.3 MiB, peak 11.1 MiB · peak test: 20 menu cycles, ri_lifetime_max_phys_footprint 12.9 MiB, exit 0 · menu draw test (offscreen: no status item, window never ordered on screen): 50 draws, 7104 rows drawn, 0 visible; footprint before 10.9 MiB, 60 s after 14.8 MiB (for the record: offscreen doesn't reproduce the on-screen cost), peak 16.0 MiB (limit 45 MiB) · menu-open test: 60 s open, displaySweeps 12 (12–13), publishes 13 (≤ 14), refreshes 14 (≤ 14), compressedReadBatches 3 (== 3), submenusOpened 3, cpuSecondsOpen 0.202, cpuPercentOpen 0.337 % (≤ 1.0), tail 0.096 s = 0.080 % over 120 s (≤ 0.3), windows 0 (offscreen: the on-screen cost is the owner's acceptance)
+rig: PASS · 0 failed · 0 skipped · report ~/Desktop/Projects/Personal/Swapless/.build/rig/rig-20261117-213945-budget.txt

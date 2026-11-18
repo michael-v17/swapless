@@ -1,0 +1,8 @@
+# menu-mousemoved-probe.swift, 2026-11-17 21:32-21:35, an announced on-screen run with the owner present.
+# Four throwaway status items (not Swapless), each opened once by performClick and closed 1 s later
+# (staggered at 3/7/11/15 s), then mouse moves counted from 22 s to 172 s while the owner worked.
+#   ./menuprobe control 3 & ./menuprobe toggle 7 & ./menuprobe popup 11 & ./menuprobe reattach 15 & wait
+popup: mouseMoved after close (150 s): window=nil 47, window=set 0; other events 8
+toggle: mouseMoved after close (150 s): window=nil 26, window=set 0; other events 6
+control: mouseMoved after close (150 s): window=nil 5019, window=set 0; other events 4
+reattach: mouseMoved after close (150 s): window=nil 24, window=set 0; other events 5

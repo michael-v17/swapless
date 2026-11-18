@@ -1,0 +1,50 @@
+# The installed app's own 'events' and 'self' lines (log category 'self'), 2026-11-17, local time.
+# Menu closed unless menuOpenSeconds grows. Fields trimmed: childCpuSeconds, peak.
+
+## Instrumented build WITHOUT the fix (pid 1585, launched 19:58)
+## 20:03-21:03: no menu open. 21:07: the owner opens the menu once (45 s).
+19:58:15 self cpuSeconds=0.380 cpuPct10m=0.000 footprint=20169640 menuOpenSeconds=0.0 cpuPct10mIdle=none menuOpenCpuSeconds=0.000 displaySweeps=0
+20:03:15 events window=300s total=0
+20:03:18 self cpuSeconds=0.901 cpuPct10m=0.172 footprint=20988840 menuOpenSeconds=0.0 cpuPct10mIdle=0.172 menuOpenCpuSeconds=0.000 displaySweeps=0
+20:08:15 events window=300s total=0
+20:08:18 self cpuSeconds=1.410 cpuPct10m=0.149 footprint=21136272 menuOpenSeconds=0.0 cpuPct10mIdle=0.171 menuOpenCpuSeconds=0.000 displaySweeps=0
+20:13:15 events window=300s total=0
+20:13:15 self cpuSeconds=1.969 cpuPct10m=0.179 footprint=21234576 menuOpenSeconds=0.0 cpuPct10mIdle=0.180 menuOpenCpuSeconds=0.000 displaySweeps=0
+20:18:15 events window=300s total=0
+20:18:18 self cpuSeconds=2.543 cpuPct10m=0.191 footprint=21365648 menuOpenSeconds=0.0 cpuPct10mIdle=0.189 menuOpenCpuSeconds=0.000 displaySweeps=0
+20:23:15 events window=300s total=0
+20:23:18 self cpuSeconds=2.920 cpuPct10m=0.159 footprint=19809168 menuOpenSeconds=0.0 cpuPct10mIdle=0.158 menuOpenCpuSeconds=0.000 displaySweeps=0
+20:28:15 events window=300s total=0
+20:28:18 self cpuSeconds=3.261 cpuPct10m=0.120 footprint=20644752 menuOpenSeconds=0.0 cpuPct10mIdle=0.128 menuOpenCpuSeconds=0.000 displaySweeps=0
+20:33:15 events window=300s total=0
+20:33:18 self cpuSeconds=3.647 cpuPct10m=0.121 footprint=21627792 menuOpenSeconds=0.0 cpuPct10mIdle=0.120 menuOpenCpuSeconds=0.000 displaySweeps=0
+20:38:15 events window=300s total=0
+20:38:18 self cpuSeconds=3.996 cpuPct10m=0.123 footprint=21037968 menuOpenSeconds=0.0 cpuPct10mIdle=0.122 menuOpenCpuSeconds=0.000 displaySweeps=0
+20:43:15 events window=300s total=1 systemDefined=1
+20:43:18 self cpuSeconds=4.445 cpuPct10m=0.133 footprint=21250960 menuOpenSeconds=0.0 cpuPct10mIdle=0.134 menuOpenCpuSeconds=0.000 displaySweeps=0
+20:48:15 events window=300s total=0
+20:48:18 self cpuSeconds=4.818 cpuPct10m=0.137 footprint=20480912 menuOpenSeconds=0.0 cpuPct10mIdle=0.135 menuOpenCpuSeconds=0.000 displaySweeps=0
+20:53:15 events window=300s total=0
+20:53:18 self cpuSeconds=5.171 cpuPct10m=0.121 footprint=20415376 menuOpenSeconds=0.0 cpuPct10mIdle=0.121 menuOpenCpuSeconds=0.000 displaySweeps=0
+20:58:15 events window=300s total=0
+20:58:18 self cpuSeconds=5.550 cpuPct10m=0.122 footprint=20677520 menuOpenSeconds=0.0 cpuPct10mIdle=0.121 menuOpenCpuSeconds=0.000 displaySweeps=0
+21:03:15 events window=300s total=2 systemDefined=2
+21:03:18 self cpuSeconds=6.158 cpuPct10m=0.167 footprint=21660560 menuOpenSeconds=0.0 cpuPct10mIdle=0.165 menuOpenCpuSeconds=0.000 displaySweeps=0
+21:08:15 events window=300s total=3676 mouseMoved=3606 mouseEntered=19 mouseExited=14 flagsChanged=2 appKitDefined=35
+21:08:18 self cpuSeconds=11.275 cpuPct10m=0.997 footprint=32998336 menuOpenSeconds=45.0 cpuPct10mIdle=0.676 menuOpenCpuSeconds=1.655 displaySweeps=12
+21:13:15 events window=300s total=9974 mouseMoved=9954 systemDefined=20
+21:13:18 self cpuSeconds=18.970 cpuPct10m=2.135 footprint=32097216 menuOpenSeconds=45.0 cpuPct10mIdle=1.834 menuOpenCpuSeconds=1.655 displaySweeps=12
+21:18:15 events window=300s total=7009 mouseMoved=7009
+21:18:18 self cpuSeconds=25.117 cpuPct10m=2.307 footprint=33162176 menuOpenSeconds=45.0 cpuPct10mIdle=2.317 menuOpenCpuSeconds=1.655 displaySweeps=12
+
+## Build WITH the fix (pid 85291, launched 21:36)
+## 21:36-21:41: the owner opens the menu, with a submenu (29.6 s). The rig budget runs from 21:39.
+21:36:08 self cpuSeconds=0.283 cpuPct10m=0.000 footprint=19121040 menuOpenSeconds=0.0 cpuPct10mIdle=none menuOpenCpuSeconds=0.000 displaySweeps=0
+21:41:08 events window=300s total=86 mouseMoved=52 leftDragged=2 mouseEntered=3 mouseExited=3 appKitDefined=26
+21:41:09 self cpuSeconds=2.426 cpuPct10m=0.713 footprint=33964992 menuOpenSeconds=29.6 cpuPct10mIdle=0.414 menuOpenCpuSeconds=1.023 displaySweeps=7
+21:46:08 events window=300s total=0
+21:46:11 self cpuSeconds=3.625 cpuPct10m=0.511 footprint=35193792 menuOpenSeconds=29.6 cpuPct10mIdle=0.404 menuOpenCpuSeconds=1.023 displaySweeps=7
+21:51:08 events window=300s total=0
+21:51:09 self cpuSeconds=4.116 cpuPct10m=0.282 footprint=34046912 menuOpenSeconds=29.6 cpuPct10mIdle=0.290 menuOpenCpuSeconds=1.023 displaySweeps=7
+21:56:08 events window=300s total=0
+21:56:11 self cpuSeconds=4.708 cpuPct10m=0.181 footprint=33620928 menuOpenSeconds=29.6 cpuPct10mIdle=0.177 menuOpenCpuSeconds=1.023 displaySweeps=7
