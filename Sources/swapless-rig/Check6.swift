@@ -105,7 +105,9 @@ enum Check6 {
             env["SWAPLESS_STATE_DIR"] = fdir
             let p = Process()
             p.executableURL = URL(fileURLWithPath: rig.debugEngine)
-            p.arguments = ["--dump-snapshot", rig.repoRoot + "/Tests/SwaplessCoreTests/Fixtures/sim-booted.json"]
+            // A raw snapshot lists every process on this Mac, so it goes to the gitignored .build/rig/,
+            // never straight into the tracked fixture. scripts/trim-snapshot.py makes the fixture from it.
+            p.arguments = ["--dump-snapshot", rig.repoRoot + "/.build/rig/sim-booted.json"]
             p.environment = env
             p.standardOutput = FileHandle.nullDevice
             p.standardError = FileHandle.nullDevice
@@ -116,7 +118,7 @@ enum Check6 {
                 if p.isRunning {
                     Timeouts.shared.record("--dump-snapshot (pid \(p.processIdentifier)) still running after 60 s")
                 } else {
-                    rig.report.line("  check 6: fixture sim-booted.json written (exit \(p.terminationStatus))")
+                    rig.report.line("  check 6: raw snapshot .build/rig/sim-booted.json written (exit \(p.terminationStatus)); to refresh the fixture: python3 -I scripts/trim-snapshot.py .build/rig/sim-booted.json Tests/SwaplessCoreTests/Fixtures/sim-booted.json")
                 }
             }
         }
