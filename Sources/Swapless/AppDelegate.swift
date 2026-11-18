@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     fileprivate var statusItem: StatusItemController?
     private var wake: WakeObserver?
     private var watcher: WindowWatcher?
+    private var eventCounter: EventCounter?
     private var cyclesStarted = false
     private var cyclesDone = 0
     private var cyclesTimer: Timer?
@@ -59,6 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let types: Set<String> = rig ? ["start", "rules", "menuCycles", "menuShows", "menuDraws", "menuOpen",
                                         "menuOpenTail", "error"] : []
         sink = EventSink(jsonTypes: types)
+        eventCounter = EventCounter(sink: sink)
         engine = Engine(config: config, sink: sink, labeler: Labeler(appNames: RunningAppNameProvider()),
                         signalSender: LiveSignalSender(sink: sink))
         menuController = MenuController(engine: engine, stateDir: config.stateDir)

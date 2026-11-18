@@ -16,6 +16,41 @@ the owner if it's wrong?":
 `/ship-task` step 3 checks these on every shipment. Discretionary entries stay welcome —
 the triggers are a floor, not a ceiling.
 
+## 2026-11-17 · Idle CPU: AppKit kept Swapless subscribed to every mouse move after the menu closed
+
+**Trigger:** "a shipped build exceeded its own overhead budget". The menu read `1.89–1.97 % CPU
+idle · 50–51 MB · over budget` (v1-quit-on-close build, 11 days up), against 0.2 %.
+
+**Measured (2026-11-17, installed release, menu closed):**
+- The old process: 112 min of CPU in 11 days. AppKit's event thread alone used 216 s/day, more
+  than Finder (99) or the Dock (69); another menu-bar app on the same Mac used 6.5. Its
+  5-min `self` lines read 0.12–0.15 % in quiet stretches and 1–3.7 % while the owner worked.
+- Swapless owns no WindowServer window (macOS 27 hosts the status item elsewhere), yet its
+  event thread pulled a steady stream of mouse events.
+- Not the cause: the workspace KVO and notifications, the display callback, the SkyLight
+  calls, hidden status items. A no-UI probe with each of them received 0 events.
+- A new `events` line (`EventCounter`, every 5 min in the `self` category) showed it. A fresh
+  launch: 0–2 events per 5 min, 0.12–0.19 %, for an hour. After one menu open by the owner
+  (45 s, 21:07): **7,000–10,000 `mouseMoved` per 5 min, every one with no window**, and
+  1.8–2.3 %. The subscription outlives the menu.
+- An announced on-screen probe (the owner present, 4 throwaway status items, one open each),
+  mouse moves in the 150 s after the close: plain menu **5019**; flipping
+  `acceptsMouseMovedEvents` on close 26; re-attaching the menu on close 24; popping the menu up
+  by hand 47.
+
+**Fix:** `MenuController.dropMouseMovedSubscription()` runs when the top-level menu closes. It
+flips every window's `acceptsMouseMovedEvents` and back (each keeps its own value), which makes
+AppKit drop the app-wide subscription. Verified on the installed app: after the owner opened
+the menu with a submenu (29.6 s, 21:36), the next windows read **0 events**.
+
+**`EventCounter` stays** as the sensor for this regression: with the menu closed its line
+should read ~0, and a steady `mouseMoved` count means it's back.
+
+**Why it looked fine before:** every earlier budget number (the rig's 597–600 s windows, the
+0.123 % after install) was taken on a process whose menu hadn't been opened, or in a quiet
+stretch. The cost needs both a menu open and the owner moving the mouse. It also explains
+2026-11-08's A/B (1.94 % with quit-on-close off): the observers weren't the cause.
+
 ## 2026-11-17 · Before going public: the tagline, the Safari claim, and what "freed" counts
 
 **Tagline (owner, 2026-11-17):** "The menu-bar app that names what pushes a 16 GB Mac into swap —

@@ -111,7 +111,22 @@ final class MenuController: NSObject, NSMenuDelegate {
         compressedCache.removeAll()
         isOpen = false
         engine.setMenuOpen(false)
+        Self.dropMouseMovedSubscription()
         onClose?()
+    }
+
+    /// macOS 27: once a status-item menu has been shown, AppKit leaves the app subscribed to
+    /// every mouse move on screen after the menu closes (`mouseMoved` with no window, ~30/s
+    /// while the owner works). It took idle CPU from 0.12–0.19 % to 1.8–2.3 % (2026-11-17,
+    /// DECISIONS.md). Flipping any window's `acceptsMouseMovedEvents` and back makes AppKit
+    /// recompute the subscription and drop it (probe: 5019 → 26 events in 150 s). Each window
+    /// keeps its own value.
+    static func dropMouseMovedSubscription() {
+        for w in NSApp.windows {
+            let was = w.acceptsMouseMovedEvents
+            w.acceptsMouseMovedEvents = !was
+            w.acceptsMouseMovedEvents = was
+        }
     }
 
     /// A group submenu is about to open: read its members' compressed memory now (never per
