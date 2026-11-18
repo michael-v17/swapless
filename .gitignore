@@ -24,3 +24,7 @@ secrets/
 !.claude/observer/README.md
 
 # Proof artifacts (screenshots, check outputs) are PRODUCT, committed on purpose — never ignore them.
+
+# ── Private operating manual ─────────────────────────────────────────────
+# CLAUDE.md is a symlink to a private file outside the repo; it is never committed.
+CLAUDE.md
